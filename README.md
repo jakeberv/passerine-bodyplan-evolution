@@ -6,7 +6,7 @@
 
 **Affiliations:** ¹ School for Environment and Sustainability, University of Michigan, Ann Arbor, MI, USA ² Michigan Institute for Data Science and AI in Society, University of Michigan, Ann Arbor, MI, USA ³ Department of Biological Sciences, University of New Orleans, New Orleans, LA, USA ⁴ Department of Ecology and Evolutionary Biology, University of Toronto, Toronto, ON, Canada ⁵ Department of Fish Ecology and Evolution, Swiss Federal Institute of Aquatic Science and Technology (Eawag), Kastanienbaum, Switzerland ⁶ Museum of Paleontology, University of Michigan, Ann Arbor, MI, USA ⁷ Department of Earth and Environmental Sciences, University of Michigan, Ann Arbor, MI, USA ⁸ Department of Ecology and Evolutionary Biology, University of Michigan, Ann Arbor, MI, USA ⁹ Department of Computer Science, Courant Institute of Mathematical Sciences, New York University, New York, NY, USA ¹⁰ Department of Electrical and Computer Engineering, Tandon School of Engineering, New York University, New York, NY, USA
 
-**Corresponding Author:** Jacob S. Berv ([jberv\@umich.edu](mailto:jberv@umich.edu), [jacob.berv\@gmail.com](mailto:jacob.berv@gmail.com))
+**Corresponding Author:** Jacob S. Berv
 
 ------------------------------------------------------------------------
 
@@ -302,4 +302,4 @@ Analyses were conducted using the R Statistical language (version 4.4.2; R Core 
 
 ## Contact
 
-**Maintainer:** Jacob S. Berv — [jberv\@umich.edu](mailto:jberv@umich.edu){.email} • [jacob.berv\@gmail.com](mailto:jacob.berv@gmail.com){.email}
+**Maintainer:** Jacob S. Berv — [jberv\@umich.edu](mailto:jberv@umich.edu) \ [jacob.berv\@gmail.com](mailto:jacob.berv@gmail.com)
