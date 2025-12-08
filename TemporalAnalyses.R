@@ -3195,6 +3195,34 @@ dev.off()
   Sigma_pca <- prcomp(Sigma_mat, center = TRUE, scale. = TRUE)
   scores    <- Sigma_pca$x
   
+  #output which taxa are on the top and bottom of PC1
+  {
+    ## pc1 scores named by regime ID
+    pc1_scores <- setNames(scores[, 1], reg_ids)
+    
+    ## top 5 and bottom 5 regimes by PC1
+    top_ids    <- names(sort(pc1_scores, decreasing = TRUE))[1:5]
+    bottom_ids <- names(sort(pc1_scores, decreasing = FALSE))[1:5]
+    
+    ## helper to get tip labels for a given regime ID
+    get_tips <- function(reg_id) {
+      runs_with_posthoc$min10.ic20.gic$posthoc[[reg_id]]$corrSt$phy$tip.label
+    }
+    
+    ## print results
+    cat("Top 5 regimes on PC1:\n")
+    for (id in top_ids) {
+      cat("\nRegime", id, "(PC1 =", pc1_scores[id], ")\n")
+      print(get_tips(id))
+    }
+    
+    cat("\n\nBottom 5 regimes on PC1:\n")
+    for (id in bottom_ids) {
+      cat("\nRegime", id, "(PC1 =", pc1_scores[id], ")\n")
+      print(get_tips(id))
+    }
+  }
+  
   ## 2. PC1–PC2 plot colored by regime age
   age_palette <- colorRampPalette(c("blue", "red"))
   age_rank    <- rank(reg_age, ties.method = "average")
