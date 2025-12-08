@@ -2470,6 +2470,13 @@ sampled_cv_shift_metrics<-sampled_cv_shift_metrics[
 saveRDS(sampled_cv_shift_metrics, file='sampled_cv_shift_metrics_8_08_25.RDS')
 sampled_cv_shift_metrics<-readRDS('sampled_cv_shift_metrics_8_08_25.RDS')
   
+#cor(log(shift_rate_metrics.branches$Tip_Phenotype_Rate), 
+#log(shift_rate_metrics.branches$Weighted_Phenotypic_Rate))
+
+#cor(log(shift_rate_metrics.shifts$Tip_Phenotype_Rate), 
+#    log(shift_rate_metrics.shifts$Weighted_Phenotypic_Rate))
+
+
 }
 
 #distribution fitting/testing
@@ -3172,5 +3179,419 @@ quartz(width=11*0.9, height=5*0.9, file='posthoc_integration_plot.pdf', type='pd
 print(posthoc_integration_plots$combined)
 dev.off()
 
+#looking at covariances in PC space -- generating heatmaps
+{
+  ## 1. Vectorize post-hoc covariance matrices and run PCA
+  res_vec <- vectorize_posthoc_cov(
+    runs_with_posthoc$min10.ic20.gic$posthoc,
+    use_correlation = TRUE,
+    min_n = 10
+  )
+  
+  Sigma_mat <- res_vec$Sigma_mat
+  reg_ids   <- res_vec$reg_ids
+  reg_age   <- res_vec$reg_age   # numeric vector of ages, named by regime ID
+  
+  Sigma_pca <- prcomp(Sigma_mat, center = TRUE, scale. = TRUE)
+  scores    <- Sigma_pca$x
+  
+  ## 2. PC1–PC2 plot colored by regime age
+  age_palette <- colorRampPalette(c("blue", "red"))
+  age_rank    <- rank(reg_age, ties.method = "average")
+  cols        <- age_palette(length(reg_age))[age_rank]
+  
+  pdf(file='pc1_pc2_diagnostic.pdf', height=5*1.2, width=7*1.2)
+  {
+ 
+    par(mfrow = c(2, 3))
+    
+    ## PC1 vs PC2 (no r here)
+    #r_pc1_pc2 <- cor(scores[, 2], scores[, 1])
+    plot(
+      scores[, 2], scores[, 1],
+      ylab = "PC1",
+      xlab = "PC2",
+      pch  = 21,
+      col  = "black",
+      bg   = alpha("grey", 0.5),
+      cex  = 1.5,
+      main = "PCA of regime-specific\ncorrelation structure"
+    )
+    #abline(lm(scores[, 1] ~ scores[, 2]), col = "red", lwd = 2, lty = 2)
+    #legend("topleft", legend = paste0("r = ", round(r_pc1_pc2, 3)), bty = "n", 
+    #       inset  = c(-0.01, 0.01))
+    #text(scores[, 1], scores[, 2], labels = reg_ids, pos = 3, cex = 0.6)
+    
+    ## PC1 vs age
+    r_pc1_age <- cor(reg_age, scores[, 1])
+    plot(
+      reg_age, scores[, 1],
+      xlab = "Regime age (Ma)",
+      ylab = "PC1 score (covariance structure)",
+      pch  = 21,
+      col  = "black",
+      bg   = alpha("grey", 0.5),
+      cex  = 1.5,
+      main = "PC1 vs age",
+      xlim = c(0, 40)
+    )
+    abline(lm(scores[, 1] ~ reg_age), col = "red", lwd = 2, lty = 2)
+    legend("topright", legend = paste0("r = ", round(r_pc1_age, 3)), bty = "n", 
+           inset  = c(-0.01, 0.01))
+    
+    ## PC2 vs age
+    r_pc2_age <- cor(reg_age, scores[, 2])
+    plot(
+      reg_age, scores[, 2],
+      xlab = "Regime age (Ma)",
+      ylab = "PC2 score (covariance structure)",
+      pch  = 21,
+      col  = "black",
+      bg   = alpha("grey", 0.5),
+      cex  = 1.5,
+      main = "PC2 vs age",
+      xlim = c(0, 40)
+    )
+    abline(lm(scores[, 2] ~ reg_age), col = "red", lwd = 2, lty = 2)
+    legend("topright", legend = paste0("r = ", round(r_pc2_age, 3)), bty = "n",
+           inset  = c(-0.01, 0.01))
+    
+    ## PC3 vs age
+    r_pc3_age <- cor(reg_age, scores[, 3])
+    plot(
+      reg_age, scores[, 3],
+      xlab = "Regime age (Ma)",
+      ylab = "PC3 score (covariance structure)",
+      pch  = 21,
+      col  = "black",
+      bg   = alpha("grey", 0.5),
+      cex  = 1.5,
+      main = "PC3 vs age",
+      xlim = c(0, 40)
+    )
+    abline(lm(scores[, 3] ~ reg_age), col = "red", lwd = 2, lty = 2)
+    legend("topright", legend = paste0("r = ", round(r_pc3_age, 3)), bty = "n",
+           inset  = c(-0.01, 0.01))
+    
+    ## PC4 vs age
+    r_pc4_age <- cor(reg_age, scores[, 4])
+    plot(
+      reg_age, scores[, 4],
+      xlab = "Regime age (Ma)",
+      ylab = "PC4 score (covariance structure)",
+      pch  = 21,
+      col  = "black",
+      bg   = alpha("grey", 0.5),
+      cex  = 1.5,
+      main = "PC4 vs age",
+      xlim = c(0, 40)
+    )
+    abline(lm(scores[, 4] ~ reg_age), col = "red", lwd = 2, lty = 2)
+    legend("topright", legend = paste0("r = ", round(r_pc4_age, 3)), bty = "n",
+           inset  = c(-0.01, 0.01))
+    
+    par(mfrow = c(1, 1))
+    
+    
+  }
+  dev.off()
+
+  ## 4. Helper to rebuild PC loadings into a trait x trait matrix
+  example_sigma <- runs_with_posthoc$min10.ic20.gic$posthoc[[ reg_ids[1] ]]$sigma$Pinv
+  trait_names   <- rownames(example_sigma)
+
+  # Overwrite with cleaner anatomical labels
+  trait_names <- c(
+    tarsus          = "Tibiotarsus",
+    metatarsus      = "Tarsometatarsus",
+    femur           = "Femur",
+    humerus         = "Humerus",
+    ulna            = "Ulna",
+    radius          = "Radius",
+    carpometacarpus = "Carpometacarpus",
+    second_digit    = "2nd digit phalanx",
+    cv.keel.1       = "Keel",
+    cv.furcula.1    = "Furcula",
+    sclerotic_ring  = "Sclerotic ring",
+    cv.skull.1      = "Skull–bill length"
+  )[trait_names]
+  
+  # Inspect PCs 1–5
+  plot_pc_loadings_heatmap(Sigma_pca, trait_names, pcs = 1)
+  
+  pdf(file = "Supp4_b.pdf", height= 7*0.8, width = 18*0.8)
+  plot_pc_loadings_heatmap_CH(Sigma_pca, trait_names, pcs = 1:4)
+  dev.off()
+  
+  pdf(file = "Supp4_b_2.pdf", height= 7*0.55, width = 18*0.8)
+  plot_pc_loadings_heatmap_CH_local(Sigma_pca, trait_names, pcs = 1:4, show_legend = F, show_dend = F, dend_size_mm = 10)
+  dev.off()
+  
+  sort(
+  scores[, 1]
+  )
+  
+  
+  runs_with_posthoc$min10.ic20.gic$posthoc$`4`$corrSt$phy$tip.label
+  runs_with_posthoc$min10.ic20.gic$posthoc$`275`$corrSt$phy$tip.label
+  runs_with_posthoc$min10.ic20.gic$posthoc$`203`$corrSt$phy$tip.label
+  
+  runs_with_posthoc$min10.ic20.gic$posthoc$`408`$corrSt$phy$tip.label
+  runs_with_posthoc$min10.ic20.gic$posthoc$`241`$corrSt$phy$tip.label
+  runs_with_posthoc$min10.ic20.gic$posthoc$`167`$corrSt$phy$tip.label
+  
+  
+}
+
+## 5. Diagnostic: does PC1 align with within-wing vs cross-module correlations?
+{
+  # Define mapping from internal names to pretty names (same as above)
+  name_map <- c(
+    tarsus          = "Tibiotarsus",
+    metatarsus      = "Tarsometatarsus",
+    femur           = "Femur",
+    humerus         = "Humerus",
+    ulna            = "Ulna",
+    radius          = "Radius",
+    carpometacarpus = "Carpometacarpus",
+    second_digit    = "2nd digit phalanx",
+    cv.keel.1       = "Keel",
+    cv.furcula.1    = "Furcula",
+    sclerotic_ring  = "Sclerotic ring",
+    cv.skull.1      = "Skull–bill length"
+  )
+  
+  # Define module membership using the pretty names
+  wing_traits     <- c("Carpometacarpus", "2nd digit phalanx",
+                       "Radius", "Ulna", "Humerus", "Keel", "Furcula")
+  hindcran_traits <- c("Tibiotarsus", "Tarsometatarsus", "Femur",
+                       "Skull–bill length", "Sclerotic ring")
+  
+  # Storage vectors aligned with reg_ids / scores[, 1]
+  within_wing_mean  <- numeric(length(reg_ids))
+  cross_module_mean <- numeric(length(reg_ids))
+  
+  for (i in seq_along(reg_ids)) {
+    reg <- reg_ids[i]
+    # Extract covariance, convert to correlation
+    Sigma_reg <- runs_with_posthoc$min10.ic20.gic$posthoc[[reg]]$sigma$Pinv
+    C_reg     <- cov2cor(Sigma_reg)
+    
+    # Map internal names to pretty names
+    internal_names <- rownames(C_reg)
+    pretty_names   <- name_map[internal_names]
+    
+    # Re-label the matrix with pretty names
+    dimnames(C_reg) <- list(pretty_names, pretty_names)
+    
+    # Indices for modules
+    wing_idx     <- pretty_names %in% wing_traits
+    hindcran_idx <- pretty_names %in% hindcran_traits
+    
+    # Within-wing mean correlation (upper triangle only, no diagonal)
+    if (sum(wing_idx) > 1) {
+      W <- C_reg[wing_idx, wing_idx, drop = FALSE]
+      within_wing_mean[i] <- mean(W[upper.tri(W, diag = FALSE)], na.rm = TRUE)
+    } else {
+      within_wing_mean[i] <- NA
+    }
+    
+    # Cross-module mean correlation: hindlimb+cranial vs wing/flight
+    if (sum(wing_idx) > 0 && sum(hindcran_idx) > 0) {
+      HxW <- C_reg[hindcran_idx, wing_idx, drop = FALSE]
+      cross_module_mean[i] <- mean(HxW, na.rm = TRUE)
+    } else {
+      cross_module_mean[i] <- NA
+    }
+  }
+  
+  # PC1 scores
+  pc1_scores <- scores[, 1]
+  
+  # Correlations between PC1 and the two summary measures
+  r_within   <- cor(pc1_scores, within_wing_mean,  use = "complete.obs")
+  r_cross    <- cor(pc1_scores, cross_module_mean, use = "complete.obs")
+  cat("\nDiagnostic correlations for PC1:\n")
+  cat("cor(PC1, within-wing mean)      = ", r_within, "\n")
+  cat("cor(PC1, hindcran <-> wing mean) = ", r_cross,  "\n")
+  
+  # Scatterplots
+  pdf(file = "pc1_diagnostic.pdf", width=(6*1.4)*1.1, height=(3*1.5)*1.1)
+  {
+  par(mfrow = c(1, 2))
+  
+  plot(pc1_scores, within_wing_mean,
+       xlab = "PC1 score",
+       ylab = "Mean within-wing correlation",
+       main = "PC1 vs within-wing",
+       pch  = 21,
+       col  = "black",
+       bg   = adjustcolor("grey", alpha.f = 0.5),
+       cex  = 1.5)
+  abline(lm(within_wing_mean ~ pc1_scores), col = "red", lwd = 2, lty = 2)
+  legend("topleft", legend = paste0("r = ", round(r_within, 3)),
+         bty = "n", inset = c(-0.01, 0.01))
+  
+  plot(pc1_scores, cross_module_mean,
+       xlab = "PC1 score",
+       ylab = "Mean hindlimb+cranial ↔ wing correlation",
+       main = "PC1 vs cross-module",
+       pch  = 21,
+       col  = "black",
+       bg   = adjustcolor("grey", alpha.f = 0.5),
+       cex  = 1.5)
+  abline(lm(cross_module_mean ~ pc1_scores), col = "red", lwd = 2, lty = 2)
+  legend("topright", legend = paste0("r = ", round(r_cross, 3)),
+         bty = "n", inset = c(-0.01, 0.01))
+  
+  par(mfrow = c(1, 1))
+  }
+  dev.off()
+  
+  
+}
+
+## Diagnostic for PC2: head–hindlimb vs head–wing correlations
+{
+  ## Diagnostic for PC2: head–hindlimb vs head–wing correlations
+  
+  # Re-use name_map from the PC1 block (assumed already defined)
+  # Define cranial, hindlimb, and wing sets using the same pretty names
+  cranial_traits <- c("Skull–bill length", "Sclerotic ring")
+  hind_traits    <- c("Tibiotarsus", "Tarsometatarsus", "Femur")
+  wing_traits    <- c("Carpometacarpus", "2nd digit phalanx",
+                      "Radius", "Ulna", "Humerus", "Keel", "Furcula")
+  
+  # Storage vectors aligned with reg_ids / scores[, 2]
+  cran_hind_mean <- numeric(length(reg_ids))  # head–hindlimb
+  cran_wing_mean <- numeric(length(reg_ids))  # head–wing
+  
+  for (i in seq_along(reg_ids)) {
+    reg <- reg_ids[i]
+    
+    # Extract covariance, convert to correlation
+    Sigma_reg <- runs_with_posthoc$min10.ic20.gic$posthoc[[reg]]$sigma$Pinv
+    C_reg     <- cov2cor(Sigma_reg)
+    
+    # Map internal names to pretty names
+    internal_names <- rownames(C_reg)
+    pretty_names   <- name_map[internal_names]
+    
+    # Re-label the matrix with pretty names
+    dimnames(C_reg) <- list(pretty_names, pretty_names)
+    
+    # Indices for modules
+    cran_idx <- pretty_names %in% cranial_traits
+    hind_idx <- pretty_names %in% hind_traits
+    wing_idx <- pretty_names %in% wing_traits
+    
+    # Mean head–hindlimb correlation
+    if (sum(cran_idx) > 0 && sum(hind_idx) > 0) {
+      CH <- C_reg[cran_idx, hind_idx, drop = FALSE]
+      cran_hind_mean[i] <- mean(CH, na.rm = TRUE)
+    } else {
+      cran_hind_mean[i] <- NA
+    }
+    
+    # Mean head–wing correlation
+    if (sum(cran_idx) > 0 && sum(wing_idx) > 0) {
+      CW <- C_reg[cran_idx, wing_idx, drop = FALSE]
+      cran_wing_mean[i] <- mean(CW, na.rm = TRUE)
+    } else {
+      cran_wing_mean[i] <- NA
+    }
+  }
+  
+  # PC2 scores
+  pc2_scores <- scores[, 2]
+  
+  # Correlations between PC2 and the two summary measures
+  r_head_hind <- cor(pc2_scores, cran_hind_mean, use = "complete.obs")
+  r_head_wing <- cor(pc2_scores, cran_wing_mean, use = "complete.obs")
+  
+  cat("\nDiagnostic correlations for PC2:\n")
+  cat("cor(PC2, head–hindlimb mean) = ", r_head_hind, "\n")
+  cat("cor(PC2, head–wing mean)      = ", r_head_wing, "\n")
+  
+  # Scatterplots (matching PC1 style)
+  pdf(file = "pc2_diagnostic.pdf", width = (6*1.4)*1.1, height = (3*1.5)*1.1)
+  {
+    par(mfrow = c(1, 2))
+    
+    plot(pc2_scores, cran_hind_mean,
+         xlab = "PC2 score",
+         ylab = "Mean head–hindlimb correlation",
+         main = "PC2 vs head–hindlimb",
+         pch  = 21,
+         col  = "black",
+         bg   = adjustcolor("grey", alpha.f = 0.5),
+         cex  = 1.5)
+    abline(lm(cran_hind_mean ~ pc2_scores), col = "red", lwd = 2, lty = 2)
+    legend("topleft", legend = paste0("r = ", round(r_head_hind, 3)),
+           bty = "n", inset = c(-0.01, 0.01))
+    
+    plot(pc2_scores, cran_wing_mean,
+         xlab = "PC2 score",
+         ylab = "Mean head–wing correlation",
+         main = "PC2 vs head–wing",
+         pch  = 21,
+         col  = "black",
+         bg   = adjustcolor("grey", alpha.f = 0.5),
+         cex  = 1.5)
+    abline(lm(cran_wing_mean ~ pc2_scores), col = "red", lwd = 2, lty = 2)
+    legend("topright", legend = paste0("r = ", round(r_head_wing, 3)),
+           bty = "n", inset = c(-0.01, 0.01))
+    
+    par(mfrow = c(1, 1))
+  }
+  dev.off()
+}
+
+## Diagnostic: regime rate vs PCs 1–4
+{
+  # 1. Build a named vector of rates by regime/state
+  rate_by_state <- setNames(all_vars_cors$min10.ic20.gic$rate,
+                            all_vars_cors$min10.ic20.gic$State)
+  
+  # 2. Align rates with the PCA regimes (reg_ids) and PC scores
+  rate_vec <- rate_by_state[reg_ids]        # in same order as scores rows
+  keep     <- !is.na(rate_vec)
+  
+  rate_use <- rate_vec[keep]
+  log_rate <- log(rate_use)
+  
+  pc_scores_use <- scores[keep, , drop = FALSE]  # subset PCs to same regimes
+  
+  # 3. Compute correlations for PCs 1–4
+  cor_pcs <- sapply(1:4, function(k) {
+    cor(pc_scores_use[, k], log_rate, use = "complete.obs")
+  })
+  names(cor_pcs) <- paste0("PC", 1:4)
+  
+  cat("\nDiagnostic correlations for log(rate) vs PCs 1–4:\n")
+  print(cor_pcs)
+  
+  # 4. Scatterplots: log(rate) vs PC1–PC4
+  par(mfrow = c(2, 2))
+  for (k in 1:4) {
+    x <- pc_scores_use[, k]
+    plot(
+      x, log_rate,
+      xlab = paste0("PC", k, " score (covariance structure)"),
+      ylab = "Log regime rate",
+      pch  = 16,
+      main = paste0("Rate vs PC", k)
+    )
+    abline(lm(log_rate ~ x), col = "red", lwd = 2)
+    # optional: add the correlation in the corner
+    legend("topleft",
+           legend = paste0("r = ", round(cor_pcs[k], 3)),
+           bty = "n")
+  }
+  par(mfrow = c(1, 1))
+}
+
 
 }
+
+

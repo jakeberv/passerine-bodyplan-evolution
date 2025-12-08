@@ -2480,6 +2480,476 @@ extractMaxAgeOfRegimes <- function(simmap_tree) {
     ))
   }
   
+
+  #' Vectorize regime-specific covariance structures from mvMORPH post-hoc results
+  #'
+  #' @param posthoc_list A named list of post-hoc regime fits, e.g.
+  #'   runs_with_posthoc$min10.ic20.gic$posthoc.
+  #'   Each element is expected to have $sigma$Pinv, the (co)variance matrix.
+  #' @param use_correlation Logical. If TRUE (default), convert each covariance
+  #'   matrix to a correlation matrix before vectorizing, to focus on structure
+  #'   rather than absolute scale.
+  #' @param min_n Numeric. Minimum number of taxa (dims$n) required for a regime
+  #'   to be included. Regimes with dims$n <= min_n are dropped. Default is 0.
+  #'
+  #' @return A list with:
+  #'   - Sigma_mat: matrix of vectorized upper off-diagonals (regimes x elements)
+  #'   - reg_ids: regime IDs (row names of Sigma_mat)
+  #'   - upper_names: column names for Sigma_mat (covariance elements)
+  #'
+  vectorize_posthoc_cov <- function(posthoc_list,
+                                    use_correlation = TRUE,
+                                    min_n = 0) {
+    if (!is.list(posthoc_list) || length(posthoc_list) == 0) {
+      stop("posthoc_list must be a non-empty list of regime objects.")
+    }
+    
+    reg_ids <- names(posthoc_list)
+    if (is.null(reg_ids) || any(reg_ids == "")) {
+      reg_ids <- as.character(seq_along(posthoc_list))
+      warning("posthoc_list has no names; using indices as reg_ids.")
+    }
+    
+    ## --- Filter regimes by dims$n (sample size) ---
+    get_n <- function(x) {
+      if (!is.null(x$dims) && !is.null(x$dims$n)) {
+        return(x$dims$n)
+      } else {
+        return(NA_real_)
+      }
+    }
+    
+    n_vec <- vapply(posthoc_list, get_n, numeric(1))
+    if (any(is.na(n_vec))) {
+      warning("Some regimes have NA dims$n; these will be dropped from vectorization.")
+    }
+    
+    keep_idx <- which(!is.na(n_vec) & n_vec > min_n)
+    if (length(keep_idx) == 0) {
+      stop("No regimes pass the min_n filter; try lowering min_n.")
+    }
+    
+    reg_ids      <- reg_ids[keep_idx]
+    posthoc_list <- posthoc_list[keep_idx]
+    n_vec        <- n_vec[keep_idx]
+    
+    ## --- Extract regime ages from corrSt$phy ---
+    get_age <- function(x) {
+      if (!is.null(x$corrSt$phy)) {
+        # root age as max node height
+        max(nodeHeights(x$corrSt$phy))
+      } else {
+        NA_real_
+      }
+    }
+    
+    reg_age <- vapply(posthoc_list, get_age, numeric(1))
+    names(reg_age) <- reg_ids
+    
+    # Helper: extract upper triangle *without* the diagonal as a vector
+    get_upper_tri <- function(M) {
+      M[upper.tri(M, diag = FALSE)]
+    }
+    
+    # Helper: create names for upper-tri off-diagonal elements
+    make_upper_names <- function(trait_names) {
+      p <- length(trait_names)
+      idx <- which(upper.tri(matrix(NA, nrow = p, ncol = p), diag = FALSE),
+                   arr.ind = TRUE)
+      apply(idx, 1, function(rc) {
+        paste(trait_names[rc[1]], trait_names[rc[2]], sep = "_")
+      })
+    }
+    
+    # Use the first kept regime as a template to get traits and dimensions
+    example_sigma <- posthoc_list[[1]]$sigma$Pinv
+    if (is.null(example_sigma)) {
+      stop("Could not find $sigma$Pinv in the first kept posthoc element.")
+    }
+    
+    trait_names <- rownames(example_sigma)
+    if (is.null(trait_names)) {
+      trait_names <- colnames(example_sigma)
+    }
+    if (is.null(trait_names)) {
+      trait_names <- paste0("trait", seq_len(nrow(example_sigma)))
+      warning("No row/column names found on sigma$Pinv; using generic trait names.")
+    }
+    
+    upper_names <- make_upper_names(trait_names)
+    
+    # Build matrix of vectorized upper off-diagonals across regimes
+    Sigma_vec_list <- lapply(reg_ids, function(reg) {
+      Sigma <- posthoc_list[[reg]]$sigma$Pinv
+      if (is.null(Sigma)) {
+        stop(sprintf("No sigma$Pinv found for regime %s.", reg))
+      }
+      # Optional: convert to correlation matrix
+      if (use_correlation) {
+        Sigma <- cov2cor(Sigma)
+      }
+      get_upper_tri(Sigma)
+    })
+    
+    Sigma_mat <- do.call(rbind, Sigma_vec_list)
+    rownames(Sigma_mat) <- reg_ids
+    colnames(Sigma_mat) <- upper_names
+    
+    return(list(
+      Sigma_mat   = Sigma_mat,
+      reg_ids     = reg_ids,
+      upper_names = upper_names,
+      reg_age     = reg_age,
+      reg_n       = n_vec
+    ))
+  }
+  
+  vec_to_mat <- function(v, trait_names) {
+    p <- length(trait_names)
+    M <- matrix(0, nrow = p, ncol = p, dimnames = list(trait_names, trait_names))
+    idx <- which(upper.tri(M, diag = FALSE), arr.ind = TRUE)
+    M[idx] <- v
+    M <- M + t(M)   # symmetrize
+    diag(M) <- 0    # off-diagonals only
+    M
+  }
+
+
+  #' Inspect and plot loadings for selected PCs
+  #'
+  #' @param pca_obj      A prcomp object (e.g., from prcomp(Sigma_mat, ...)).
+  #' @param trait_names  Character vector of trait names (in the order of the
+  #'                     original covariance matrix).
+  #' @param pcs          Integer vector of PC indices to inspect (e.g., 1:5).
+  #'
+  plot_pc_loadings_heatmap <- function(pca_obj, trait_names, pcs = 1:5) {
+    # helper: vector-of-offdiagonals -> symmetric matrix
+    vec_to_mat <- function(v, trait_names) {
+      p <- length(trait_names)
+      M <- matrix(0, nrow = p, ncol = p, dimnames = list(trait_names, trait_names))
+      idx <- which(upper.tri(M, diag = FALSE), arr.ind = TRUE)
+      M[idx] <- v
+      M <- M + t(M)
+      diag(M) <- 0
+      M
+    }
+    
+    # proportion of variance explained by each PC
+    var_exp <- pca_obj$sdev^2 / sum(pca_obj$sdev^2)
+    
+    for (k in pcs) {
+      cat("\n===== PC", k, "=====\n")
+      
+      load_k <- pca_obj$rotation[, k]
+      
+      # Top 10 pairs by absolute loading
+      ord_k <- order(abs(load_k), decreasing = TRUE)
+      print(head(load_k[ord_k], 10))
+      
+      # Matrix of loadings for PC k
+      pc_mat_k <- vec_to_mat(load_k, trait_names)
+      
+      # Percent variance explained on this PC
+      pct_var <- round(100 * var_exp[k], 1)
+      
+      # Heatmap of PC k loadings on pairwise trait correlations
+      heatmap(
+        pc_mat_k,
+        scale   = "none",
+        margins = c(8, 8),
+        main    = paste0(
+          "PC", k, " (", pct_var, "% var) loadings on pairwise trait correlations"
+        )
+      )
+    }
+  }
+  
+  #' Inspect and plot loadings for selected PCs using ComplexHeatmap + RdYlBu
+  #'
+  #' @param pca_obj      A prcomp object (e.g., from prcomp(Sigma_mat, ...)).
+  #' @param trait_names  Character vector of trait names (in the order of the
+  #'                     original covariance matrix).
+  #' @param pcs          Integer vector of PC indices to inspect (e.g., 1:5).
+  #'
+  #' Requires: ComplexHeatmap, circlize, RColorBrewer, assignRateColors()
+  plot_pc_loadings_heatmap_CH <- function(pca_obj, trait_names, pcs = 1:5) {
+    if (!requireNamespace("ComplexHeatmap", quietly = TRUE) ||
+        !requireNamespace("circlize", quietly = TRUE) ||
+        !requireNamespace("RColorBrewer", quietly = TRUE)) {
+      stop("This function requires the packages 'ComplexHeatmap', 'circlize', and 'RColorBrewer'.")
+    }
+    
+    library(ComplexHeatmap)
+    library(circlize)
+    
+    # helper: vector-of-offdiagonals -> symmetric trait x trait matrix
+    vec_to_mat <- function(v, trait_names) {
+      p <- length(trait_names)
+      M <- matrix(0, nrow = p, ncol = p, dimnames = list(trait_names, trait_names))
+      idx <- which(upper.tri(M, diag = FALSE), arr.ind = TRUE)
+      M[idx] <- v
+      M <- M + t(M)
+      diag(M) <- 0
+      M
+    }
+    
+    # proportion of variance explained by each PC
+    var_exp <- pca_obj$sdev^2 / sum(pca_obj$sdev^2)
+    
+    ht_list <- NULL
+    
+    for (k in pcs) {
+      cat("\n===== PC", k, "=====\n")
+      
+      load_k <- pca_obj$rotation[, k]
+      
+      # Print top 10 pairs by absolute loading
+      ord_k <- order(abs(load_k), decreasing = TRUE)
+      print(head(load_k[ord_k], 10))
+      
+      # Build trait x trait loading matrix for this PC
+      pc_mat_k <- vec_to_mat(load_k, trait_names)
+      
+      # % variance explained
+      pct_var <- round(100 * var_exp[k], 1)
+      
+      # Symmetric range used for color mapping
+      max_abs <- max(abs(pc_mat_k), na.rm = TRUE)
+      
+      # Use assignRateColors only to generate a RdYlBu ramp
+      vals <- as.vector(pc_mat_k)
+      names(vals) <- seq_along(vals)
+      pal_info <- assignRateColors(
+        rates        = vals,
+        breaksmethod = "linear",
+        logcolor     = FALSE,
+        palette      = "RdYlBu",
+        nbreaks      = 15,
+        reverse      = TRUE
+      )
+      colors_vec <- pal_info$break_colors$colors  # 15-color RdYlBu gradient (reversed)
+      
+      # Map colors smoothly across [-max_abs, max_abs] so 0 is at the center
+      color_vals <- seq(-max_abs, max_abs, length.out = length(colors_vec))
+      col_fun    <- circlize::colorRamp2(color_vals, colors_vec)
+      
+      # Row/column dendrograms (row reversed for orientation)
+      row_hc   <- hclust(dist(pc_mat_k))
+      row_dend <- as.dendrogram(row_hc)
+      row_dend <- rev(row_dend)
+      
+      col_hc   <- hclust(dist(t(pc_mat_k)))
+      col_dend <- as.dendrogram(col_hc)
+      
+      # Actual data range for this PC
+      data_min <- min(pc_mat_k, na.rm = TRUE)
+      data_max <- max(pc_mat_k, na.rm = TRUE)
+      
+      # Legend ticks: only show ranges that actually appear in the data
+      if (data_min < 0 && data_max > 0) {
+        # both negative and positive loadings present
+        legend_at <- c(data_min, 0, data_max)
+      } else if (data_min >= 0) {
+        # only non-negative loadings
+        legend_at <- c(0, data_max)
+      } else { # data_max <= 0
+        # only non-positive loadings
+        legend_at <- c(data_min, 0)
+      }
+      legend_labels <- round(legend_at, 2)
+      
+      ht <- Heatmap(
+        pc_mat_k,
+        name                 = paste0("PC", k),
+        col                  = col_fun,
+        cluster_rows         = row_dend,
+        cluster_columns      = col_dend,
+        show_row_dend        = TRUE,
+        show_column_dend     = TRUE,
+        row_dend_side        = "left",
+        column_dend_side     = "top",
+        row_dend_width       = grid::unit(25, "mm"),
+        column_dend_height   = grid::unit(25, "mm"),
+        show_row_names       = TRUE,
+        show_column_names    = TRUE,
+        row_names_side       = "right",
+        column_names_side    = "bottom",
+        row_names_gp         = grid::gpar(fontsize = 11),
+        column_names_gp      = grid::gpar(fontsize = 11),
+        column_names_rot     = 90,
+        column_title         = paste0(
+          "PC", k, " (", pct_var, "% var) loadings\n"
+        ),
+        heatmap_legend_param = list(
+          title  = paste0("PC", k, " loadings"),
+          at     = legend_at,
+          labels = legend_labels
+        )
+      )
+      
+      if (is.null(ht_list)) {
+        ht_list <- ht
+      } else {
+        ht_list <- ht_list + ht
+      }
+    }
+    
+    draw(ht_list, merge_legend = TRUE)
+    
+    invisible(ht_list)
+  }
+  
+  #' Inspect and plot loadings for selected PCs with per-PC clustering
+  #'
+  #' Each PC is clustered independently on rows and columns.
+  #' You can optionally show or hide dendrograms; axis labels always reflect
+  #' the per-PC clustering (not shared across PCs).
+  #'
+  #' @param pca_obj      A prcomp object (e.g., from prcomp(Sigma_mat, ...)).
+  #' @param trait_names  Character vector of trait names (in the order of the
+  #'                     original covariance matrix).
+  #' @param pcs          Integer vector of PC indices to inspect (e.g., 1:5).
+  #' @param show_legend  Logical, whether to show a heatmap legend for each
+  #'                     panel. Default FALSE.
+  #' @param show_dend    Logical, whether to show row/column dendrograms for each
+  #'                     heatmap. Default FALSE.
+  #' @param dend_size_mm Numeric, dendrogram size in millimeters for both row and
+  #'                     column dendrograms. Default 40.
+  #'
+  #' Requires: ComplexHeatmap, circlize, RColorBrewer, assignRateColors, gridExtra
+  plot_pc_loadings_heatmap_CH_local <- function(pca_obj,
+                                                trait_names,
+                                                pcs          = 1:5,
+                                                show_legend  = FALSE,
+                                                show_dend    = FALSE,
+                                                dend_size_mm = 40) {
+    if (!requireNamespace("ComplexHeatmap", quietly = TRUE) ||
+        !requireNamespace("circlize", quietly = TRUE) ||
+        !requireNamespace("RColorBrewer", quietly = TRUE) ||
+        !requireNamespace("gridExtra", quietly = TRUE)) {
+      stop("This function requires 'ComplexHeatmap', 'circlize', 'RColorBrewer', and 'gridExtra'.")
+    }
+    
+    library(ComplexHeatmap)
+    library(circlize)
+    library(gridExtra)
+    
+    # helper: vector-of-offdiagonals -> symmetric trait x trait matrix
+    vec_to_mat <- function(v, trait_names) {
+      p <- length(trait_names)
+      M <- matrix(0, nrow = p, ncol = p, dimnames = list(trait_names, trait_names))
+      idx <- which(upper.tri(M, diag = FALSE), arr.ind = TRUE)
+      M[idx] <- v
+      M <- M + t(M)
+      diag(M) <- 0
+      M
+    }
+    
+    # proportion of variance explained by each PC
+    var_exp <- pca_obj$sdev^2 / sum(pca_obj$sdev^2)
+    
+    grobs <- vector("list", length(pcs))
+    names(grobs) <- paste0("PC", pcs, "_local")
+    
+    for (i in seq_along(pcs)) {
+      k <- pcs[i]
+      cat("\n===== PC", k, " (local order) =====\n")
+      
+      load_k <- pca_obj$rotation[, k]
+      
+      # Print top 10 pairs by absolute loading
+      ord_k <- order(abs(load_k), decreasing = TRUE)
+      print(head(load_k[ord_k], 10))
+      
+      # Build trait x trait loading matrix for this PC
+      pc_mat_k <- vec_to_mat(load_k, trait_names)
+      
+      # % variance explained
+      pct_var <- round(100 * var_exp[k], 1)
+      
+      # Symmetric range used for color mapping
+      max_abs <- max(abs(pc_mat_k), na.rm = TRUE)
+      
+      # Use assignRateColors only to generate a RdYlBu ramp
+      vals <- as.vector(pc_mat_k)
+      names(vals) <- seq_along(vals)
+      pal_info <- assignRateColors(
+        rates        = vals,
+        breaksmethod = "linear",
+        logcolor     = FALSE,
+        palette      = "RdYlBu",
+        nbreaks      = 15,
+        reverse      = TRUE
+      )
+      colors_vec <- pal_info$break_colors$colors  # 15-color RdYlBu gradient (reversed)
+      
+      # Map colors smoothly across [-max_abs, max_abs] so 0 is at the center
+      color_vals <- seq(-max_abs, max_abs, length.out = length(colors_vec))
+      col_fun    <- circlize::colorRamp2(color_vals, colors_vec)
+      
+      # Actual data range for this PC (for legend labels only)
+      data_min <- min(pc_mat_k, na.rm = TRUE)
+      data_max <- max(pc_mat_k, na.rm = TRUE)
+      
+      # Legend ticks: only show ranges that actually appear in the data
+      if (data_min < 0 && data_max > 0) {
+        legend_at <- c(data_min, 0, data_max)
+      } else if (data_min >= 0) {
+        legend_at <- c(0, data_max)
+      } else { # data_max <= 0
+        legend_at <- c(data_min, 0)
+      }
+      legend_labels <- round(legend_at, 2)
+      
+      # Per-PC clustering (use reversed row ordering for consistency with top row)
+      row_hc   <- hclust(dist(pc_mat_k))
+      row_dend <- as.dendrogram(row_hc)
+      row_dend <- rev(row_dend)
+      
+      col_hc   <- hclust(dist(t(pc_mat_k)))
+      col_dend <- as.dendrogram(col_hc)
+      
+      ht <- Heatmap(
+        pc_mat_k,
+        name                 = paste0("PC", k, "_local"),
+        col                  = col_fun,
+        cluster_rows         = row_dend,      # per-PC dendrogram, reversed
+        cluster_columns      = col_dend,      # per-PC column dendrogram
+        show_row_dend        = show_dend,
+        show_column_dend     = show_dend,
+        row_dend_side        = "left",
+        column_dend_side     = "top",
+        row_dend_width       = grid::unit(dend_size_mm, "mm"),
+        column_dend_height   = grid::unit(dend_size_mm, "mm"),
+        show_row_names       = TRUE,
+        show_column_names    = TRUE,
+        row_names_side       = "right",
+        column_names_side    = "bottom",
+        row_names_gp         = grid::gpar(fontsize = 11),
+        column_names_gp      = grid::gpar(fontsize = 11),
+        column_names_rot     = 90,
+        column_title         = paste0(
+          "PC", k, " (", pct_var, "% var)",
+          if (show_dend) " (local order + dendrogram)" else " (local order)"
+        ),
+        show_heatmap_legend  = show_legend,
+        heatmap_legend_param = list(
+          title  = paste0("PC", k, " loadings"),
+          at     = legend_at,
+          labels = legend_labels
+        )
+      )
+      
+      # draw this heatmap alone and capture it as a grob
+      grobs[[i]] <- grid::grid.grabExpr(draw(ht))
+    }
+    
+    # Arrange all local-order heatmaps in a single row
+    gridExtra::grid.arrange(grobs = grobs, nrow = 1)
+    
+    invisible(grobs)
+  }
+  
   
 }
 

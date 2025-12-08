@@ -2214,12 +2214,14 @@ plot_disparity_metrics_by_latitude <- function(
     p_threshold = 0.05,
     p_adjust_method = "none",
     color_by_region = FALSE,
-    legend_alpha = 1
+    legend_alpha = 1,
+    n_species_threshold = 20,
+    low_n_species_color = "grey50"
 ) {
   library(dplyr); library(ggplot2); library(h3jsr)
   library(sf);   library(patchwork); library(scales)
   
-  if (missing(add_kz_metrics))        add_kz_metrics        <- !is.null(kz_results)
+  if (missing(add_kz_metrics))         add_kz_metrics         <- !is.null(kz_results)
   if (missing(add_dispersion_metrics)) add_dispersion_metrics <- !is.null(dispersion_results)
   
   # 1) Prepare data frames
@@ -2253,7 +2255,9 @@ plot_disparity_metrics_by_latitude <- function(
     } else {
       df1
     }
-    make_metric_plot(
+    
+    # Base plot (unchanged behavior)
+    p <- make_metric_plot(
       df_plot, metric, polygons_for_plot,
       point_size, point_alpha, add_loess,
       zero_line_metrics, one_line_metrics,
@@ -2262,11 +2266,70 @@ plot_disparity_metrics_by_latitude <- function(
       color_by_region = color_by_region, 
       legend_alpha = legend_alpha
     )
+    
+    # Overlay only for K: highlight parts of the % significant curve
+    # where the sliding-window mean n_species < n_species_threshold.
+    if (metric == "K" &&
+        "n_species" %in% names(df_plot) &&
+        "p_value"   %in% names(df_plot)) {
+      
+      # Replicate the K-significance logic from make_metric_plot
+      df_metric <- df_plot %>%
+        dplyr::filter(!is.na(.data[[metric]]))
+      
+      if (nrow(df_metric)) {
+        df_metric$significant <- p.adjust(df_metric$p_value, p_adjust_method) < p_threshold
+        
+        bins <- seq(-90, 90 - bin_size, by = step_size)
+        
+        prop_data <- data.frame(
+          bin_center = bins + bin_size / 2,
+          prop_sig   = sapply(bins, function(b) {
+            w <- df_metric$latitude >= b & df_metric$latitude < b + bin_size
+            if (any(w)) mean(df_metric$significant[w], na.rm = TRUE) else NA_real_
+          }),
+          mean_n_species = sapply(bins, function(b) {
+            w <- df_metric$latitude >= b & df_metric$latitude < b + bin_size
+            if (any(w)) mean(df_metric$n_species[w], na.rm = TRUE) else NA_real_
+          })
+        )
+        
+        # Drop bins where prop_sig is NA (to match the base curve's data)
+        prop_data <- tidyr::drop_na(prop_data, prop_sig)
+        
+        if (!is.null(n_species_threshold)) {
+          low_idx <- which(!is.na(prop_data$mean_n_species) &
+                             prop_data$mean_n_species < n_species_threshold)
+          
+          if (length(low_idx) > 0) {
+            # Split into contiguous segments to avoid drawing across gaps
+            starts <- c(1, which(diff(low_idx) > 1) + 1)
+            ends   <- c(which(diff(low_idx) > 1), length(low_idx))
+            
+            for (k in seq_along(starts)) {
+              seg_idx  <- low_idx[starts[k]:ends[k]]
+              seg_data <- prop_data[seg_idx, , drop = FALSE]
+              
+              p <- p + ggplot2::geom_line(
+                data        = seg_data,
+                ggplot2::aes(x = bin_center, y = prop_sig),
+                inherit.aes = FALSE,
+                linewidth   = 1,  # same lwd as the original % significant curve
+                color       = alpha(low_n_species_color, 0.75)
+              )
+            }
+          }
+        }
+      }
+    }
+    
+    p
   })
   
   # 6) Combine and return
   patchwork::wrap_plots(plots, ncol = 3)
 }
+
 
 
 #' Estimate Local Trait Covariance Structure and Dimensionality

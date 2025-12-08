@@ -129,7 +129,8 @@ print(head(name_mapping[name_mapping$original_name != name_mapping$suggested_nam
 
 # Step 5: Perform GBIF name matching for the updated suggested names
 # -------------------------------------------------------------------
-gbif_matches <- name_backbone_checklist(name_mapping$suggested_name)
+gbif_matches <- rgbif::name_backbone_checklist(name_mapping$suggested_name)
+#saveRDS(gbif_matches, file="updated_gbif_matches.RDS")
 sum(is.na(gbif_matches$verbatim_name))
 length(unique(gbif_matches$speciesKey))
 }
@@ -486,9 +487,13 @@ subset_df <- resident_species.1.h3.metrics$weighting_df %>% filter(h3_cell == fi
 {
 #using 3 cores to use less memory
 passeriformes.filtered.1.metrics <- aggregate_h3_metrics_counts(passeriformes.filtered.merged.deduplicated.1, cores = 2, use_sqrt = F)
+gc(); plan(sequential);
 passeriformes.filtered.12.metrics <- aggregate_h3_metrics_counts(passeriformes.filtered.merged.deduplicated.12, cores = 2, use_sqrt = F)
+gc(); plan(sequential);
 passeriformes.filtered.1.metrics$metrics_df$species_key_count_range_weighted_log <- log(passeriformes.filtered.1.metrics$metrics_df$species_key_count_range_weighted)
+gc(); plan(sequential);
 passeriformes.filtered.12.metrics$metrics_df$species_key_count_range_weighted_log <- log(passeriformes.filtered.12.metrics$metrics_df$species_key_count_range_weighted)
+gc(); plan(sequential);
 
 #now add sampling fraction to dataset (overwriting)
 resident_species.1.h3.metrics.backup <- resident_species.1.h3.metrics
@@ -662,7 +667,6 @@ gc()
 #test plots for disparity and phylogenetic signal
 {
   
-  
   # Example call
   plot_disparity_metrics_by_latitude(
     disparity_results = disparity.divergence,
@@ -680,6 +684,24 @@ gc()
     p_threshold = 0.05, color_by_region = T, point_alpha = 0.25, legend_alpha = 0.8
   )
   
+  # Example call
+  plot_disparity_metrics_by_latitude(
+    disparity_results = disparity.divergence,
+    kz_results = kz_per_cell,
+    add_kz_metrics = TRUE,
+    dispersion_results = resident_species.1.h3.mahalanobis$metrics_df,
+    add_dispersion_metrics = TRUE,
+    metrics = c("K"),
+    zero_line_metrics = c("Z"),
+    one_line_metrics  = c("K"),
+    point_size = 0.75,
+    add_loess = FALSE,
+    bin_size = 15,
+    step_size = 5,
+    p_threshold = 0.05, color_by_region = T, point_alpha = 0.25, legend_alpha = 0.8,
+    n_species_threshold = 10, low_n_species_color = 'yellow'
+  ) #+ geom_vline(xintercept = 68, linetype = "solid", color = "black")
+    #geom_vline(xintercept = - 40, linetype = "solid", color = "black")
   
 }
 
@@ -721,7 +743,8 @@ gc()
     p_threshold           = 0.05,
     color_by_region       = TRUE,
     point_alpha           = 0.25,
-    legend_alpha          = 0.8, p_adjust_method = 'BY'
+    legend_alpha          = 0.8, p_adjust_method = 'BY',
+    n_species_threshold = 10, low_n_species_color = 'yellow'
   )
   
   vcv_plot <- plot_vcv_metrics_by_latitude_v2(
@@ -762,7 +785,7 @@ quartz(width=11*1.1, height=5*1.1, type='pdf', file = 'extinction.pdf')
 dp_plot / vcv_plot
 dev.off()
 
-quartz(height=3*1.9, width=(9*1.5)/1.6, type='pdf', file = 'Figure4.pdf')
+quartz(height=3*2.1, width=(9*1.5)/1.6, type='pdf', file = 'Figure4.pdf')
 (
   ((vcv_plot[[1]] + xlim(-75, 75) + theme_classic() + theme(legend.position = "none")) |
      (dp_plot[[1]] + xlim(-75, 75) + theme_classic() + theme(legend.position = "right"))) /
@@ -916,7 +939,7 @@ sampling_frac.1 / sampling_frac.12
       title = "Histogram of Rate Variation",  # Title
       useDensity = FALSE,              # Plot counts (not density)
       logscale = FALSE, lwd=0.1, cex.axis = 1.25, cex.main = 1.5         # Do not use a log scale
-    )
+    ) + ylim(0, 1050) + xlim(-9.5, -7)
     
     mean_tip_rate.1.combined <- mean_tip_rate.1 / ((plot_spacer() | mean_tip_rate.1.hist | plot_spacer()) + plot_layout(widths = c(1, 10, 1))) + plot_layout(heights = c(4, 2)) + plot_annotation(title = "Global distribution of Mean Tip Rates")
     
@@ -964,7 +987,7 @@ sampling_frac.1 / sampling_frac.12
       title = "Histogram of Rate Variation",  # Title
       useDensity = FALSE,              # Plot counts (not density)
       logscale = FALSE, lwd=0.1, cex.axis = 1.25, cex.main = 1.5         # Do not use a log scale
-    )
+    ) + ylim(0, 1150) + xlim(-10, -6)
     
     tip_rate_range_weighted_mean.1.combined <- tip_rate_range_weighted_mean.1 / ((plot_spacer() | tip_rate_range_weighted_mean.1.hist | plot_spacer()) + plot_layout(widths = c(1, 10, 1))) + plot_layout(heights = c(4, 2)) + plot_annotation(title = "Global distribution of Tip Rate Range Weighted Mean")
     
@@ -1013,7 +1036,7 @@ sampling_frac.1 / sampling_frac.12
       title = "Histogram of Rate Variation",  # Title
       useDensity = FALSE,              # Plot counts (not density)
       logscale = FALSE, lwd=0.1, cex.axis = 1.25, cex.main = 1.5         # Do not use a log scale
-    )
+    ) + ylim(0, 1000)
     
     mean_lineage_rate.1.combined <- mean_lineage_rate.1 / ((plot_spacer() | mean_lineage_rate.1.hist | plot_spacer()) + plot_layout(widths = c(1, 10, 1))) + plot_layout(heights = c(4, 2)) + plot_annotation(title = "Global distribution of Mean Lineage Rates")
     
@@ -1061,10 +1084,9 @@ sampling_frac.1 / sampling_frac.12
       title = "Histogram of Rate Variation",  # Title
       useDensity = FALSE,              # Plot counts (not density)
       logscale = FALSE, lwd=0.1, cex.axis = 1.25, cex.main = 1.5         # Do not use a log scale
-    )
+    ) + ylim(0, 1000)
     
     mean_lineage_rate_range_weighted.1.combined <- mean_lineage_rate_range_weighted.1 / ((plot_spacer() | mean_lineage_rate_range_weighted.1.hist | plot_spacer()) + plot_layout(widths = c(1, 10, 1))) + plot_layout(heights = c(4, 2)) + plot_annotation(title = "Global distribution of Mean Lineage Rate Range Weighted")
-    
     
     
   }
@@ -1111,7 +1133,7 @@ sampling_frac.1 / sampling_frac.12
       title = "Histogram of Rate Variation",  # Title
       useDensity = FALSE,              # Plot counts (not density)
       logscale = FALSE, lwd=0.1, cex.axis = 1.25, cex.main = 1.5         # Do not use a log scale
-    )
+    ) + ylim(0,1150) + xlim(-3, 1.5)
     
     mean_tipDR.1.combined <- mean_tipDR.1 / ((plot_spacer() | mean_tipDR.1.hist | plot_spacer()) + plot_layout(widths = c(1, 10, 1))) + plot_layout(heights = c(4, 2)) + plot_annotation(title = "Global distribution of tipDR")
     mean_tipDR.1.combined
@@ -1161,7 +1183,7 @@ sampling_frac.1 / sampling_frac.12
       title = "Histogram of Rate Variation",  # Title
       useDensity = FALSE,              # Plot counts (not density)
       logscale = FALSE, lwd=0.1, cex.axis = 1.25, cex.main = 1.5         # Do not use a log scale
-    )
+    ) + ylim(0, 1300) + xlim(-3, 1)
     
     tipDR_range_weighted_mean.1.combined <- tipDR_range_weighted_mean.1 / ((plot_spacer() | tipDR_range_weighted_mean.1.hist | plot_spacer()) + plot_layout(widths = c(1, 10, 1))) + plot_layout(heights = c(4, 2)) + plot_annotation(title = "Global distribution of tipDR, Range Weighted")
     tipDR_range_weighted_mean.1.combined
@@ -1208,12 +1230,12 @@ sampling_frac.1 / sampling_frac.12
       ),                               # Named vector of rates
       colors = custom_palette.species_key_count.1$colors,  # Colors from custom_palette
       breaks = custom_palette.species_key_count.1$breaks,  # Breaks from custom_palette
-      xlab = "Counts",          # X-axis label
-      ylab = "Counts",                 # Y-axis label
+      ylab = "Cell Counts",          # X-axis label
+      xlab = "Species Counts",                 # Y-axis label
       title = "Histogram of Species Counts",  # Title
       useDensity = FALSE,              # Plot counts (not density)
-      logscale = FALSE, lwd=0.1, cex.axis = 1.25, cex.main = 1.5         # Do not use a log scale
-    )
+      logscale = FALSE, lwd=0.1, cex.axis = 1.75, cex.main = 1.75, cex.lab = 1.5         # Do not use a log scale
+    ) + ylim(0, 1500) + xlim(0, 250)
     
     sp.count.1.combined <- sp.count.1 / ((plot_spacer() | sp.count.1.hist | plot_spacer()) + plot_layout(widths = c(1, 10, 1))) + plot_layout(heights = c(4, 2)) + plot_annotation(title = "Global distribution of Species Count")
     
@@ -1258,12 +1280,12 @@ sampling_frac.1 / sampling_frac.12
       ),                               # Named vector of rates
       colors = custom_palette.sampling_frac.1$colors,  # Colors from custom_palette
       breaks = custom_palette.sampling_frac.1$breaks,  # Breaks from custom_palette
-      xlab = "Counts",          # X-axis label
-      ylab = "Counts",                 # Y-axis label
+      ylab = "Cell Counts",          # X-axis label
+      xlab = "Species Sampling Fraction",                 # Y-axis label
       title = "Histogram of Species Counts",  # Title
       useDensity = FALSE,              # Plot counts (not density)
-      logscale = FALSE, lwd=0.1, cex.axis = 1.25, cex.main = 1.5         # Do not use a log scale
-    )
+      logscale = FALSE, lwd=0.1, cex.axis = 1.75, cex.main = 1.75, cex.lab = 1.5         # Do not use a log scale
+    ) + ylim(0, 2000) + xlim(0, 1)
     
     sampling_frac.1.combined <- sampling_frac.1 / ((plot_spacer() | sampling_frac.1.hist | plot_spacer()) + plot_layout(widths = c(1, 10, 1))) + plot_layout(heights = c(4, 2)) + plot_annotation(title = "Global distribution of Sampling Fraction")
     
@@ -1308,16 +1330,64 @@ sampling_frac.1 / sampling_frac.12
       ),                               # Named vector of rates
       colors = custom_palette.sampling_frac_asin.1$colors,  # Colors from custom_palette
       breaks = custom_palette.sampling_frac_asin.1$breaks,  # Breaks from custom_palette
-      xlab = "Counts",          # X-axis label
-      ylab = "Counts",                 # Y-axis label
-      title = "Histogram of Species Counts (asin(sqrt))",  # Title
+      ylab = "Cell Counts",          # X-axis label
+      xlab = "Species Sampling Fraction\n(arcsine square root)",                 # Y-axis label
+      title = "Histogram of Species Counts",  # Title
       useDensity = FALSE,              # Plot counts (not density)
-      logscale = FALSE, lwd=0.1, cex.axis = 1.25, cex.main = 1.5         # Do not use a log scale
-    )
+      logscale = FALSE, lwd=0.1, cex.axis = 1.75, cex.main = 1.75, cex.lab = 1.5         # Do not use a log scale
+    ) + ylim(0, 1700) + xlim(0.1, 1.6)
     
     sampling_frac_asin.1.combined <- sampling_frac_asin.1 / ((plot_spacer() | sampling_frac_asin.1.hist | plot_spacer()) + plot_layout(widths = c(1, 10, 1))) + plot_layout(heights = c(4, 2)) + plot_annotation(title = "Global distribution of Sampling Fraction (Arcsine Transformed)")
     
   }
+  
+  
+  plot(resident_species.1.h3.metrics$metrics_df$tip_rate_range_weighted_mean~
+       resident_species.1.h3.metrics$metrics_df$mean_lineage_rate_range_weighted, 
+       ylab = "Tip-rate grid cell mean estimates",
+       xlab = "Lineage-rate grid cell mean estimates", main = "Tip vs Lineage-rate in spatial analyses")
+  
+  quartz(file = "Lineage_vs_Tip_rates.pdf", height = 8, width = 8, type = 'pdf')
+  with(resident_species.1.h3.metrics$metrics_df, {
+    # initial fit to get studentized residuals (lineage ~ tip)
+    fit_all <- lm(mean_lineage_rate_range_weighted ~ tip_rate_range_weighted_mean)
+    stud    <- rstudent(fit_all)
+    keep    <- abs(stud) <= 3
+    
+    # plot filtered data: x = tip-rate, y = lineage-rate
+    plot(
+      tip_rate_range_weighted_mean[keep],
+      mean_lineage_rate_range_weighted[keep],
+      xlab = "Tip-rate grid cell mean estimates",
+      ylab = "Lineage-rate grid cell mean estimates",
+      main = "Lineage vs Tip-rate in spatial analyses\n(| rstudent | > 3 removed)",
+      pch  = 21,
+      bg   = adjustcolor("grey", alpha.f = 0.50),
+      col  = "black",
+      lwd  = 0.01,
+      cex  = 2.00
+    )
+    
+    # refit on filtered data and add regression line (lineage ~ tip)
+    fit <- lm(mean_lineage_rate_range_weighted[keep] ~ tip_rate_range_weighted_mean[keep])
+    abline(fit, col = "red", lwd = 2, lty = 2)
+    
+    # correlation and R^2 on filtered data
+    r   <- cor(tip_rate_range_weighted_mean[keep],
+               mean_lineage_rate_range_weighted[keep],
+               use = "complete.obs")
+    r2  <- summary(fit)$r.squared
+    a   <- coef(fit)[1]
+    b   <- coef(fit)[2]
+    
+    eqn_text <- bquote(
+      y == .(round(a, 3)) + .(round(b, 3)) * x ~
+        "(" * R^2 == .(round(r2, 3)) * "," ~ r == .(round(r, 3)) * ")"
+    )
+    
+    legend("topleft", legend = as.expression(eqn_text), bty = "n")
+  })
+  dev.off()
   
 }
 
@@ -1357,7 +1427,6 @@ sampling_frac.1 / sampling_frac.12
       plot.tag = element_text(size = 16, face = "bold")
     )
   dev.off()
-  
   
   
 }
@@ -1871,13 +1940,12 @@ sampling_frac.1 / sampling_frac.12
         ),                               # Named vector of rates
         colors = custom_palette.species_key_count_range_weighted_log.passerines.1$colors,  # Colors from custom_palette
         breaks = custom_palette.species_key_count_range_weighted_log.passerines.1$breaks,  # Breaks from custom_palette
-        xlab = "Log range weighted counts",          # X-axis label
-        ylab = "Counts",                 # Y-axis label
+        xlab = "Log range-weighted\n species counts",          # X-axis label
+        ylab = "Cell Counts",                 # Y-axis label
         title = "Histogram of Richness",  # Title
         useDensity = FALSE,              # Plot counts (not density)
         logscale = FALSE, lwd=0.1, cex.axis = 1.25, cex.main = 1.5         # Do not use a log scale
-      )
-      
+      ) + ylim(0,1050) + xlim(-9, 10)
       
       richness.combined <- species_key_count_range_weighted_log.passerines.1 / ((plot_spacer() | species_key_count_range_weighted_log.passerines.1.hist | plot_spacer()) + plot_layout(widths = c(1, 10, 1))) + plot_layout(heights = c(4, 2)) + plot_annotation(title = "Global distribution of Local Species Richnes")
       
@@ -1955,12 +2023,11 @@ sampling_frac.1 / sampling_frac.12
         colors = custom_palette.species_key_count.passerines.1$colors,  # Colors from custom_palette
         breaks = custom_palette.species_key_count.passerines.1$breaks,  # Breaks from custom_palette
         xlab = "Species Counts",          # X-axis label
-        ylab = "Counts",                 # Y-axis label
+        ylab = "Cell Counts",                 # Y-axis label
         title = "Histogram of Species Counts",  # Title
         useDensity = FALSE,              # Plot counts (not density)
         logscale = FALSE, lwd=0.1, cex.axis = 1.25, cex.main = 1.5         # Do not use a log scale
-      )
-      
+      ) + ylim(0, 1300) + xlim(0, 320)
       
       counts.combined <- species_key_count.passerines.1 / ((plot_spacer() | species_key_count.passerines.1.hist | plot_spacer()) + plot_layout(widths = c(1, 10, 1))) + plot_layout(heights = c(4, 2)) + plot_annotation(title = "Global distribution of Species Counts")
       
@@ -2434,6 +2501,12 @@ spatial_coords.12 <- data.frame(spatial_coords.12,
           logscale = FALSE, lwd=0.01, cex.axis = 1.25, cex.main = 1.5         # Do not use a log scale
         )
       }
+      
+      valid_methods <- c("linear", "quantile", "jenks", "sd", "equal", 
+                         "pretty", "kmeans", "hclust", "bclust", "fisher", 
+                         "dpih", "headtails", "maximum", "box")
+      
+      
       #residuals
       {
         custom_palette.residuals.9c.2c <- assignRateColors(
@@ -2476,11 +2549,23 @@ spatial_coords.12 <- data.frame(spatial_coords.12,
           colors = custom_palette.residuals.9c.2c$colors,  # Colors from custom_palette
           breaks = custom_palette.residuals.9c.2c$breaks,  # Breaks from custom_palette
           xlab = "Residuals",          # X-axis label
-          ylab = "Counts",                 # Y-axis label
+          ylab = "Counts (pseudo-log)",                 # Y-axis label
           title = "Residual Variability",  # Title
           useDensity = FALSE,              # Plot counts (not density)
           logscale = FALSE, lwd=0.01, cex.axis = 1.25, cex.main = 1.5         # Do not use a log scale
-        )
+        )+
+          scale_y_continuous(
+            trans  = pseudo_log_trans(base = 10, sigma = 20)
+          ) +
+          coord_cartesian(
+            ylim   = c(-5, NA),   # force y to start at 0, let ggplot pick the top
+            expand = FALSE
+          ) 
+        
+        #+ xlim(-1.5,1.5)
+        #generate_color_bar(break_colors = custom_palette.residuals.9c.2c$break_colors)
+        
+        
       }
       
       pdf(file="predicted_vs_residuals.pdf", height=9*2, width=4.5*2)
@@ -3319,17 +3404,19 @@ spatial_coords.12 <- data.frame(spatial_coords.12,
   # -------------------------------------------------------------------
   # Row 1
   # -------------------------------------------------------------------
+  
   row1 <- (
     (predicted_rates_plot.9c.2c + ggtitle(NULL) + map_theme) |
-      hist_centered(predicted_rates.hist.9c.2c)
+      hist_centered(predicted_rates.hist.9c.2c + ylim(0,620))  
   ) + plot_layout(widths = c(3, 1))
   
+
   # -------------------------------------------------------------------
   # Row 2
   # -------------------------------------------------------------------
   row2 <- (
     (bio4_plot + ggtitle(NULL) + map_theme) |
-      hist_centered(bio4.hist)
+      hist_centered(bio4.hist + ylim(0, 950) + xlim(NA,2500))
   ) + plot_layout(widths = c(3, 1))
   
   # -------------------------------------------------------------------
@@ -3337,7 +3424,7 @@ spatial_coords.12 <- data.frame(spatial_coords.12,
   # -------------------------------------------------------------------
   row3 <- (
     (residual_rates_plot.9c.2c + ggtitle(NULL) + map_theme) |
-      hist_centered(residuals.hist.9c.2c.residuals + xlim(-0.5,0.5)) 
+      hist_centered(residuals.hist.9c.2c.residuals + xlim(-1.5,1.5)) 
   ) + plot_layout(widths = c(3, 1))
   
   # -------------------------------------------------------------------
