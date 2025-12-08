@@ -6,7 +6,7 @@
 
 **Affiliations:** ¹ School for Environment and Sustainability, University of Michigan, Ann Arbor, MI, USA ² Michigan Institute for Data Science and AI in Society, University of Michigan, Ann Arbor, MI, USA ³ Department of Biological Sciences, University of New Orleans, New Orleans, LA, USA ⁴ Department of Ecology and Evolutionary Biology, University of Toronto, Toronto, ON, Canada ⁵ Department of Fish Ecology and Evolution, Swiss Federal Institute of Aquatic Science and Technology (Eawag), Kastanienbaum, Switzerland ⁶ Museum of Paleontology, University of Michigan, Ann Arbor, MI, USA ⁷ Department of Earth and Environmental Sciences, University of Michigan, Ann Arbor, MI, USA ⁸ Department of Ecology and Evolutionary Biology, University of Michigan, Ann Arbor, MI, USA ⁹ Department of Computer Science, Courant Institute of Mathematical Sciences, New York University, New York, NY, USA ¹⁰ Department of Electrical and Computer Engineering, Tandon School of Engineering, New York University, New York, NY, USA
 
-**Corresponding Author:** Jacob S. Berv
+**Corresponding Authors:** Jacob S. Berv, Brian C. Weeks
 
 ------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@
 >
 > - `TemporalAnalyses.R` + `TemporalAnalyses-functions.R` → rate–shift search, simulations, and summary plots (Figures 1A–2).
 > - `SpatialAnalyses.R` + `SpatialAnalyses-functions.R` → species matching, range/grid processing, climate joins, spatial models, and figures (Figures 1B–D, 3–4).
-> - Heavy steps are cached as `.RDS` files; scripts read those by default.
+> - Heavy steps are cached as `.RDS` files (archived on Zenodo); scripts read those by default.
 
 This repository provides the code to replicate the primary analysis pipeline in our study, which integrates phylogenetic comparative methods with spatial statistics. The workflow is divided into two primary R scripts, and two scripts containing new functions relevant to each. Each primary script loads dependencies, sets up a working directory, and then executes the analytical pipeline.
 
