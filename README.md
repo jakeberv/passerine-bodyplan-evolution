@@ -18,12 +18,14 @@
 
 This repository provides the code to replicate the primary analysis pipeline in our study, which integrates phylogenetic comparative methods with spatial statistics. The workflow is divided into two primary R scripts, and two scripts containing new functions relevant to each. Each primary script loads dependencies, sets up a working directory, and then executes the analytical pipeline.
 
-*Note: To facilitate reproducibility, most of the “heavy” execution lines in the scripts are commented out, allowing the script to load preprocessed `.RDS` objects. `.RDS` files are a standard format for storing R objects, enabling the preservation of data states across sessions.*
+*To facilitate reproducibility, most of the “heavy” execution lines in the scripts are commented out, allowing the script to load preprocessed `.RDS` objects. `.RDS` files are a standard format for storing R objects, enabling the preservation of data states across sessions.*
 
 > [!NOTE]
 > **Note on reuse and analysis**
+>
 > This repository primarily serves as an archival record of the analyses used in this study.  
-> Users interested in running these methods on their own datasets should use the **bifrost** R package, which provides a supported and generalizable implementation of the analysis pipeline: [CRAN](https://cran.r-project.org/package=bifrost) · [GitHub](https://github.com/jakeberv/bifrost)
+> Users interested in running these methods on their own datasets should use the **bifrost** R package, which provides a supported and generalizable implementation of the analysis pipeline:  
+> [CRAN](https://cran.r-project.org/package=bifrost) · [GitHub](https://github.com/jakeberv/bifrost)
 
 ------------------------------------------------------------------------
 
