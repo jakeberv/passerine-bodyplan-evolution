@@ -1,5 +1,5 @@
 # Master R code for executing analyses for
-# Rates of Avian Body Plan Evolution in Space and Time
+# Rates of passerine body plan evolution in space and time
 # Spatial Analyses (primarily)
 
 #load necessary packages

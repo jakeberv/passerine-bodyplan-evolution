@@ -1,6 +1,6 @@
 # Supplemental Code Repository
 
-## Rates of Avian Body Plan Evolution in Space and Time
+## Rates of passerine body plan evolution in space and time
 
 **Authors:** Jacob S. Berv¹², Charlotte M. Probst¹, Santiago Claramunt³,⁴, J. Ryan Shipley⁵, Matt Friedman²,⁶,⁷, Stephen A. Smith⁸, David F. Fouhey⁹,¹⁰, Brian C. Weeks¹
 
@@ -10,15 +10,20 @@
 
 ------------------------------------------------------------------------
 
-> **At a glance**
->
-> - `TemporalAnalyses.R` + `TemporalAnalyses-functions.R` → rate–shift search, simulations, and summary plots (Figures 1A–2).
-> - `SpatialAnalyses.R` + `SpatialAnalyses-functions.R` → species matching, range/grid processing, climate joins, spatial models, and figures (Figures 1B–D, 3–4).
-> - Heavy steps are cached as `.RDS` files (archived on Zenodo); scripts read those by default.
+### At a glance
+
+- `TemporalAnalyses.R` + `TemporalAnalyses-functions.R` → rate–shift search, simulations, and summary plots (Figures 1A–2).
+- `SpatialAnalyses.R` + `SpatialAnalyses-functions.R` → species matching, range/grid processing, climate joins, spatial models, and figures (Figures 1B–D, 3–4).
+- Heavy steps are cached as `.RDS` files (archived on Zenodo); scripts read those by default.
 
 This repository provides the code to replicate the primary analysis pipeline in our study, which integrates phylogenetic comparative methods with spatial statistics. The workflow is divided into two primary R scripts, and two scripts containing new functions relevant to each. Each primary script loads dependencies, sets up a working directory, and then executes the analytical pipeline.
 
-*Note: To facilitate reproducibility, most of the 'heavy' execution lines in the scripts are commented out, allowing the script to load preprocessed RDS objects. RDS files are a standard format for storing R objects, enabling the preservation of data states across sessions.*
+*Note: To facilitate reproducibility, most of the “heavy” execution lines in the scripts are commented out, allowing the script to load preprocessed `.RDS` objects. `.RDS` files are a standard format for storing R objects, enabling the preservation of data states across sessions.*
+
+> [!NOTE]
+> **Note on reuse and analysis**
+> This repository primarily serves as an archival record of the analyses used in this study.  
+> Users interested in running these methods on their own datasets should use the **bifrost** R package, which provides a supported and generalizable implementation of the analysis pipeline: [CRAN](https://cran.r-project.org/package=bifrost) · [GitHub](https://github.com/jakeberv/bifrost)
 
 ------------------------------------------------------------------------
 
@@ -194,7 +199,7 @@ The analyses in this study are based on three primary data sources:
 
 If you use the code or data from this repository, please cite our paper:
 
-> Berv, J.S., Probst, C.M., Claramunt, S., Shipley, J.R., Friedman, M., Smith, S.A., Fouhey, D.F., & Weeks, B.C. (Year). Rates of avian body plan evolution in space and time. *Journal Placeholder*, Volume(Issue), pages. [DOI placeholder]
+> Berv, J.S., Probst, C.M., Claramunt, S., Shipley, J.R., Friedman, M., Smith, S.A., Fouhey, D.F., & Weeks, B.C. (Year). Rates of passerine body plan evolution in space and time. *Journal Placeholder*, Volume(Issue), pages. [DOI placeholder]
 
 ------------------------------------------------------------------------
 
