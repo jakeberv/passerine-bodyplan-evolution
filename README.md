@@ -4,20 +4,19 @@
 
 **Authors:** Jacob S. Berv¹² [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-5962-0621), Charlotte M. Probst¹ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0003-4394-6931), Santiago Claramunt³⁴ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-8926-5974), J. Ryan Shipley⁵ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0001-9864-2498), Matt Friedman²⁶⁷ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-0114-7384), Stephen A. Smith⁸ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0003-2035-9531), David F. Fouhey⁹¹⁰ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0001-5028-5161), Brian C. Weeks¹ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0003-2967-2970)
 
-**Affiliations:**
-- ¹ School for Environment and Sustainability, University of Michigan (Ann Arbor, MI, USA)
-- ² Michigan Institute for Data Science and AI in Society, University of Michigan (Ann Arbor, MI, USA)
-- ³ Department of Biological Sciences, University of New Orleans (New Orleans, LA, USA)
-- ⁴ Department of Ecology and Evolutionary Biology, University of Toronto (Toronto, ON, Canada)
-- ⁵ Department of Fish Ecology and Evolution, Swiss Federal Institute of Aquatic Science and Technology (Eawag) (Kastanienbaum, Switzerland)
-- ⁶ Museum of Paleontology, University of Michigan (Ann Arbor, MI, USA)
-- ⁷ Department of Earth and Environmental Sciences, University of Michigan (Ann Arbor, MI, USA)
-- ⁸ Department of Ecology and Evolutionary Biology, University of Michigan (Ann Arbor, MI, USA)
-- ⁹ Department of Computer Science, Courant Institute of Mathematical Sciences, New York University (New York, NY, USA)
-- ¹⁰ Department of Electrical and Computer Engineering, Tandon School of Engineering, New York University (New York, NY, USA)
+**Affiliations:**  
+¹ School for Environment and Sustainability, University of Michigan (Ann Arbor, MI, USA)  
+² Michigan Institute for Data Science and AI in Society, University of Michigan (Ann Arbor, MI, USA)  
+³ Department of Biological Sciences, University of New Orleans (New Orleans, LA, USA)  
+⁴ Department of Ecology and Evolutionary Biology, University of Toronto (Toronto, ON, Canada)  
+⁵ Department of Fish Ecology and Evolution, Swiss Federal Institute of Aquatic Science and Technology (Eawag) (Kastanienbaum, Switzerland)  
+⁶ Museum of Paleontology, University of Michigan (Ann Arbor, MI, USA)  
+⁷ Department of Earth and Environmental Sciences, University of Michigan (Ann Arbor, MI, USA)  
+⁸ Department of Ecology and Evolutionary Biology, University of Michigan (Ann Arbor, MI, USA)  
+⁹ Department of Computer Science, Courant Institute of Mathematical Sciences, New York University (New York, NY, USA)  
+¹⁰ Department of Electrical and Computer Engineering, Tandon School of Engineering, New York University (New York, NY, USA)
 
 **Corresponding authors:** Jacob S. Berv; Brian C. Weeks
-
 
 ------------------------------------------------------------------------
 
