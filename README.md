@@ -18,7 +18,7 @@
 
 **Corresponding authors:** Jacob S. Berv; Brian C. Weeks
 
-------------------------------------------------------------------------
+---
 
 ### At a glance
 
@@ -37,7 +37,7 @@ This repository provides the code to replicate the primary analysis pipeline in 
 > Users interested in running these methods on their own datasets should use the **bifrost** R package, which provides a supported and generalizable implementation of the analysis pipeline:  
 > [CRAN](https://cran.r-project.org/package=bifrost) · [GitHub](https://github.com/jakeberv/bifrost)
 
-------------------------------------------------------------------------
+---
 
 ## Quickstart
 
@@ -63,7 +63,7 @@ Windows: - Install **Rtools** (matching your R version). `sf`, `terra`, `lwgeom`
 
 > If `cairo_pdf()` fails on Linux, install Cairo headers: `sudo apt-get install libcairo2-dev`.
 
-------------------------------------------------------------------------
+---
 
 ### 1) Clone
 
@@ -111,7 +111,7 @@ message("Done. If there were no errors above, all requested packages are install
 > source('https://raw.githubusercontent.com/jonchang/fastdivrate/refs/heads/master/R/dr.R')
 > ```
 
-------------------------------------------------------------------------
+---
 
 ### 3) Prepare input data
 
@@ -149,7 +149,7 @@ data/
   trMat.1000.idw.RDS
 ```
 
-------------------------------------------------------------------------
+---
 
 **External datasets:**
 - **WorldClim 2.1** bioclim rasters (5 arc-min), especially **BioClim 4 (temperature seasonality)**. If recomputing climate summaries, download from WorldClim and set a directory path in the spatial functions; by default the script uses cached `spatial_coords*.RDS`.
@@ -165,7 +165,7 @@ DOIs/links to archives (e.g., Zenodo) will be added when paper is published.
 -   **Long runtimes / memory:** reduce `{future}` workers or rely on the cached `.RDS` files rather than recomputing from raw sources.
 -   **`ggrain` missing:** comment out `library(ggrain)` in `TemporalAnalyses-functions.R` if installation fails; the remaining code will run.
 
-------------------------------------------------------------------------
+---
 
 ## Analytical Workflow
 
@@ -193,7 +193,7 @@ Within the spatial analysis, we analyze the structure of phenotypic variation wi
 
 We use **Spatial Autoregressive Models** (via `spatialreg::lagsarlm`) to investigate the relationship between evolutionary rates and predictors like latitude, temperature seasonality (BioClim4), and local species richness. We explicitly account for spatial autocorrelation by constructing a spatial weights matrix using `spdep::dnearneigh` and `spdep::nb2listw`, based on an inverse-distance scheme. This analysis generates the data for the scatterplots in **Figures 1B, 1C, & 1D** and the global maps in **Figure 3**.
 
-------------------------------------------------------------------------
+---
 
 ### Data and Phylogeny
 
@@ -208,7 +208,7 @@ The analyses in this study are based on three primary data sources:
 -   Weeks, B. C., Zhou, Z., Probst, C. M., Berv, J. S., O’Brien, B., Benz, B. W., Skeen, H. R., Ziebell, M., Bodt, L. & Fouhey, D. F. (2025). *Skeletal trait measurements for thousands of bird species*. **Scientific Data**, 12, Article 884. <https://doi.org/10.1038/s41597-025-05234-y>
 -   Claramunt, S., Sheard, C., Brown, J. W., Cortés-Ramírez, G., Cracraft, J., Su, M. M., Weeks, B. C. & Tobias, J. A. (2025). *A new time tree of birds reveals the interplay between dispersal, geographic range size, and diversification*. **Current Biology**. Advance online publication. <https://doi.org/10.1016/j.cub.2025.07.004>
 
-------------------------------------------------------------------------
+---
 
 ## Citation
 
@@ -216,7 +216,7 @@ If you use the code or data from this repository, please cite our paper:
 
 > Berv, J.S., Probst, C.M., Claramunt, S., Shipley, J.R., Friedman, M., Smith, S.A., Fouhey, D.F., & Weeks, B.C. (Year). Rates of passerine body plan evolution in time and space. *Journal Placeholder*, Volume(Issue), pages. [DOI placeholder]
 
-------------------------------------------------------------------------
+---
 
 # System and Package Versions (Temporal Analyses)
 
@@ -318,7 +318,7 @@ Analyses were conducted using the R Statistical language (version 4.4.2; R Core 
 -   **Code:** (add a `LICENSE` file).
 -   **Data:** Governed by providers’ licenses (e.g., WorldClim, GBIF). Verify terms before redistribution.
 
-------------------------------------------------------------------------
+---
 
 ## Contact
 
