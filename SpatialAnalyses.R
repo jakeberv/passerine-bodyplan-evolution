@@ -3447,3 +3447,506 @@ spatial_coords.12 <- data.frame(spatial_coords.12,
   
 }
 
+#quantile diagnostics
+{
+  # =====================================================================================
+  # STREAMLINED PRODUCTION SCRIPT (Quantile tails + diagnostics + FINAL 25%-only figure)
+  #
+  # Goal:
+  #   - Keep ALL diagnostic calculations/prints (10% + 25% tails)
+  #   - Only build the PLOTS/OBJECTS needed for the FINAL output figure:
+  #       Count maps (25%):    map_fast25, map_slow25, leg_fast25, leg_slow25
+  #       Fraction maps (25%): map_hot25_frac, map_cold25_frac, leg_hot25_frac, leg_cold25_frac
+  #       Diagnostics (25%):   p1_25, p2_25, p3_25, p4_25
+  #   - Still computes metrics.fast10/slow10 so diagnostics can run for 10% too.
+  #
+  # Requires existing objects/functions in your workspace:
+  #   Data:
+  #     resident_species.1
+  #     polygons_sf.1
+  #     resident_species.1.h3.metrics$metrics_df with columns:
+  #       h3_cell, mean_lineage_rate_range_weighted, species_key_count
+  #   Functions:
+  #     aggregate_h3_metrics_counts()
+  #     assignRateColors()
+  #     plot_h3_metrics_global.custom.raster()
+  #     generate_color_bar()
+  #     generate_scatter_with_colorbar()
+  # =====================================================================================
+  
+    cat("\n=== Running streamlined quantile maps + diagnostics + final figure (25% only output) ===\n")
+    
+    # ---------------------------
+    # Libraries
+    # ---------------------------
+    library(ggplot2)
+    library(patchwork)
+    library(scales)
+    
+    # ---------------------------
+    # Sanity checks (core inputs)
+    # ---------------------------
+    need_objs <- c("resident_species.1", "polygons_sf.1", "resident_species.1.h3.metrics")
+    missing <- need_objs[!vapply(need_objs, exists, logical(1))]
+    if (length(missing) > 0) stop("Missing required object(s): ", paste(missing, collapse = ", "))
+    
+    need_fns <- c("aggregate_h3_metrics_counts", "assignRateColors", "plot_h3_metrics_global.custom.raster",
+                  "generate_color_bar", "generate_scatter_with_colorbar")
+    missing_fns <- need_fns[!vapply(need_fns, exists, logical(1))]
+    if (length(missing_fns) > 0) stop("Missing required function(s): ", paste(missing_fns, collapse = ", "))
+    
+    needed_cols <- c("h3_cell", "mean_lineage_rate_range_weighted", "species_key_count")
+    if (!all(needed_cols %in% names(resident_species.1.h3.metrics$metrics_df))) {
+      stop("resident_species.1.h3.metrics$metrics_df missing one of: ", paste(needed_cols, collapse = ", "))
+    }
+    
+    # ---------------------------
+    # Parameters (single source of truth)
+    # ---------------------------
+    crs_moll   <- "+proj=moll +lat_0=0 +datum=WGS84 +units=m +no_defs"
+    ocean_col  <- alpha("#87B7DB", 0.5)
+    
+    pal_args <- list(
+      breaksmethod = "fisher", logcolor = FALSE, palette = "RdYlBu",
+      nbreaks = 20, reverse = TRUE, largeN = 20000, samp_prop = 1
+    )
+    
+    map_leg_widths <- c(14, 0.75)                      # maps wider, legend narrower
+    map_side_pad   <- 0.03                             # horizontal padding around each map-panel
+    leg_vpad_heights <- c(0.15, 0.70, 0.15)            # shrink colorbars vertically ~30%
+    
+    diag_left_sp  <- 0.18
+    diag_right_sp <- 0.45
+    diag_mid      <- 1.00
+    diag_row_heights <- c(1, 1, 1.171875, 1.171875)
+    diag_pad <- theme(plot.margin = margin(10, 10, 10, 10))
+    
+    # ---------------------------
+    # Small local helpers (no external side effects)
+    # ---------------------------
+    make_pal <- function(rates_named) {
+      do.call(assignRateColors, c(list(rates = rates_named), pal_args))
+    }
+    
+    make_leg <- function(break_colors, bar_title) {
+      generate_color_bar(break_colors, bar_title = bar_title, n_ticks = 5) +
+        theme(plot.margin = margin(0, 0, 0, 0))
+    }
+    
+    vshrink_legend <- function(leg) {
+      (plot_spacer() / leg / plot_spacer()) + plot_layout(heights = leg_vpad_heights)
+    }
+    
+    wrap_map_panel <- function(map_plot, legend_plot_v) {
+      core <- (map_plot | legend_plot_v) + plot_layout(widths = map_leg_widths)
+      wrap_elements(
+        full = ((plot_spacer() | core | plot_spacer()) +
+                  plot_layout(widths = c(map_side_pad, 1, map_side_pad))),
+        ignore_tag = FALSE, clip = FALSE
+      )
+    }
+    
+    wrap_diag_panel <- function(p) {
+      wrap_elements(
+        full = ((plot_spacer() | p | plot_spacer()) +
+                  plot_layout(widths = c(diag_left_sp, diag_mid, diag_right_sp))),
+        ignore_tag = FALSE, clip = FALSE
+      )
+    }
+    
+    # ===================================================================================
+    # A) Quantile tails: compute species-level mean rates and define 10% / 25% tail keys
+    # ===================================================================================
+    cat("\n--- A) Computing species tail sets (10% + 25%) ---\n")
+    
+    resident_species.1$speciesKey <- as.character(resident_species.1$speciesKey)
+    
+    rate_by_key <- tapply(
+      resident_species.1$log_lineage_rate,
+      resident_species.1$speciesKey,
+      mean,
+      na.rm = TRUE
+    )
+    rate_by_key <- rate_by_key[!is.na(rate_by_key)]
+    
+    q25 <- quantile(rate_by_key, probs = c(0.25, 0.75), na.rm = TRUE)
+    q10 <- quantile(rate_by_key, probs = c(0.10, 0.90), na.rm = TRUE)
+    
+    keys_slow25 <- names(rate_by_key)[rate_by_key <= q25[[1]]]
+    keys_fast25 <- names(rate_by_key)[rate_by_key >= q25[[2]]]
+    keys_slow10 <- names(rate_by_key)[rate_by_key <= q10[[1]]]
+    keys_fast10 <- names(rate_by_key)[rate_by_key >= q10[[2]]]
+    
+    cat(sprintf("25%% tails: %d slow | %d fast species\n", length(keys_slow25), length(keys_fast25)))
+    cat(sprintf("10%% tails: %d slow | %d fast species\n", length(keys_slow10), length(keys_fast10)))
+    
+    # ===================================================================================
+    # B) H3 aggregation (counts): build metrics objects for 25% and 10% tails
+    # ===================================================================================
+    cat("\n--- B) Aggregating tail richness per H3 cell (counts) ---\n")
+    
+    resident.slow25 <- resident_species.1[resident_species.1$speciesKey %in% keys_slow25, ]
+    resident.fast25 <- resident_species.1[resident_species.1$speciesKey %in% keys_fast25, ]
+    resident.slow10 <- resident_species.1[resident_species.1$speciesKey %in% keys_slow10, ]
+    resident.fast10 <- resident_species.1[resident_species.1$speciesKey %in% keys_fast10, ]
+    
+    metrics.slow25 <- aggregate_h3_metrics_counts(resident.slow25, cores = 4, use_sqrt = FALSE, verbose = FALSE)
+    metrics.fast25 <- aggregate_h3_metrics_counts(resident.fast25, cores = 4, use_sqrt = FALSE, verbose = FALSE)
+    metrics.slow10 <- aggregate_h3_metrics_counts(resident.slow10, cores = 4, use_sqrt = FALSE, verbose = FALSE)
+    metrics.fast10 <- aggregate_h3_metrics_counts(resident.fast10, cores = 4, use_sqrt = FALSE, verbose = FALSE)
+    
+    # ===================================================================================
+    # C) COUNT maps (25% only): create map_fast25/map_slow25 + legends
+    # ===================================================================================
+    cat("\n--- C) Building 25% COUNT maps + legends (objects for final figure) ---\n")
+    
+    rates_fast25 <- setNames(metrics.fast25$metrics_df$species_key_count, metrics.fast25$metrics_df$h3_cell)
+    rates_slow25 <- setNames(metrics.slow25$metrics_df$species_key_count, metrics.slow25$metrics_df$h3_cell)
+    
+    pal_fast25 <- make_pal(rates_fast25)
+    pal_slow25 <- make_pal(rates_slow25)
+    
+    map_fast25 <- plot_h3_metrics_global.custom.raster(
+      results = metrics.fast25, polygons_sf = polygons_sf.1,
+      metric_column = "species_key_count", custom_palette = alpha(pal_fast25$colors, 1),
+      crs = crs_moll, ocean_color = ocean_col,
+      border_thickness = 0.25, graticule_color = "white", graticule_thickness = 0.1
+    ) + ggtitle("Top 25% rapidly evolving lineages")
+    
+    map_slow25 <- plot_h3_metrics_global.custom.raster(
+      results = metrics.slow25, polygons_sf = polygons_sf.1,
+      metric_column = "species_key_count", custom_palette = alpha(pal_slow25$colors, 1),
+      crs = crs_moll, ocean_color = ocean_col,
+      border_thickness = 0.25, graticule_color = "white", graticule_thickness = 0.1
+    ) + ggtitle("Bottom 25% slowly evolving lineages")
+    
+    leg_fast25 <- make_leg(pal_fast25$break_colors, "Species count")
+    leg_slow25 <- make_leg(pal_slow25$break_colors, "Species count")
+    
+    # ===================================================================================
+    # D) FRACTION maps (25% only): create map_hot25_frac/map_cold25_frac + legends
+    # ===================================================================================
+    cat("\n--- D) Building 25% FRACTION maps + legends (objects for final figure) ---\n")
+    
+    total_df <- resident_species.1.h3.metrics$metrics_df[, c("h3_cell","species_key_count")]
+    names(total_df)[2] <- "total_richness"
+    
+    hot25_df <- metrics.fast25$metrics_df[, c("h3_cell","species_key_count")]
+    names(hot25_df)[2] <- "hot25_count"
+    cold25_df <- metrics.slow25$metrics_df[, c("h3_cell","species_key_count")]
+    names(cold25_df)[2] <- "cold25_count"
+    
+    frac25_df <- merge(total_df, hot25_df, by = "h3_cell", all.x = TRUE)
+    frac25_df <- merge(frac25_df, cold25_df, by = "h3_cell", all.x = TRUE)
+    frac25_df$hot25_count[is.na(frac25_df$hot25_count)] <- 0
+    frac25_df$cold25_count[is.na(frac25_df$cold25_count)] <- 0
+    
+    frac25_df$hot25_fraction  <- with(frac25_df, ifelse(total_richness > 0, hot25_count  / total_richness, NA_real_))
+    frac25_df$cold25_fraction <- with(frac25_df, ifelse(total_richness > 0, cold25_count / total_richness, NA_real_))
+    frac25_df$hot25_fraction[is.na(frac25_df$hot25_fraction)] <- 0
+    frac25_df$cold25_fraction[is.na(frac25_df$cold25_fraction)] <- 0
+    
+    metrics.hot25_fraction <- metrics.fast25
+    metrics.cold25_fraction <- metrics.slow25
+    metrics.hot25_fraction$metrics_df  <- frac25_df[, c("h3_cell","hot25_fraction")]
+    metrics.cold25_fraction$metrics_df <- frac25_df[, c("h3_cell","cold25_fraction")]
+    
+    rates_hot25_frac  <- setNames(metrics.hot25_fraction$metrics_df$hot25_fraction,  metrics.hot25_fraction$metrics_df$h3_cell)
+    rates_cold25_frac <- setNames(metrics.cold25_fraction$metrics_df$cold25_fraction, metrics.cold25_fraction$metrics_df$h3_cell)
+    
+    pal_hot25_frac  <- make_pal(rates_hot25_frac)
+    pal_cold25_frac <- make_pal(rates_cold25_frac)
+    
+    map_hot25_frac <- plot_h3_metrics_global.custom.raster(
+      results = metrics.hot25_fraction, polygons_sf = polygons_sf.1,
+      metric_column = "hot25_fraction", custom_palette = alpha(pal_hot25_frac$colors, 1),
+      crs = crs_moll, ocean_color = ocean_col,
+      border_thickness = 0.25, graticule_color = "white", graticule_thickness = 0.1
+    ) + ggtitle("Top 25% lineages (fraction of assemblage)")
+    
+    map_cold25_frac <- plot_h3_metrics_global.custom.raster(
+      results = metrics.cold25_fraction, polygons_sf = polygons_sf.1,
+      metric_column = "cold25_fraction", custom_palette = alpha(pal_cold25_frac$colors, 1),
+      crs = crs_moll, ocean_color = ocean_col,
+      border_thickness = 0.25, graticule_color = "white", graticule_thickness = 0.1
+    ) + ggtitle("Bottom 25% lineages (fraction of assemblage)")
+    
+    leg_hot25_frac  <- make_leg(pal_hot25_frac$break_colors,  "Fraction")
+    leg_cold25_frac <- make_leg(pal_cold25_frac$break_colors, "Fraction")
+    
+    # ===================================================================================
+    # E) Diagnostics (KEEP ALL calculations): run for BOTH 10% and 25% tails
+    #     - Produces p1..p4 (10%) and p1_25..p4_25 (25%) objects
+    # ===================================================================================
+    cat("\n--- E) Diagnostics for Reviewer 2.4 (10% + 25%) ---\n")
+    
+    grid_df <- resident_species.1.h3.metrics$metrics_df[, c(
+      "h3_cell", "mean_lineage_rate_range_weighted", "species_key_count"
+    )]
+    names(grid_df) <- c("h3_cell", "mean_rate_rw", "total_richness")
+    
+    hot10_df <- metrics.fast10$metrics_df[, c("h3_cell", "species_key_count")]
+    names(hot10_df)[2] <- "hot10_count"
+    cold10_df <- metrics.slow10$metrics_df[, c("h3_cell", "species_key_count")]
+    names(cold10_df)[2] <- "cold10_count"
+    
+    hot25_df <- metrics.fast25$metrics_df[, c("h3_cell", "species_key_count")]
+    names(hot25_df)[2] <- "hot25_count"
+    cold25_df <- metrics.slow25$metrics_df[, c("h3_cell", "species_key_count")]
+    names(cold25_df)[2] <- "cold25_count"
+    
+    diag_df <- merge(grid_df, hot10_df, by = "h3_cell", all.x = TRUE)
+    diag_df <- merge(diag_df, cold10_df, by = "h3_cell", all.x = TRUE)
+    diag_df <- merge(diag_df, hot25_df, by = "h3_cell", all.x = TRUE)
+    diag_df <- merge(diag_df, cold25_df, by = "h3_cell", all.x = TRUE)
+    
+    diag_df$hot10_count[is.na(diag_df$hot10_count)] <- 0
+    diag_df$cold10_count[is.na(diag_df$cold10_count)] <- 0
+    diag_df$hot25_count[is.na(diag_df$hot25_count)] <- 0
+    diag_df$cold25_count[is.na(diag_df$cold25_count)] <- 0
+    
+    diag_df <- diag_df[
+      is.finite(diag_df$mean_rate_rw) &
+        is.finite(diag_df$total_richness) &
+        diag_df$total_richness > 0,
+    ]
+    
+    thr90 <- quantile(diag_df$mean_rate_rw, 0.90, na.rm = TRUE)
+    diag_df$high_mean10pct <- diag_df$mean_rate_rw >= thr90
+    
+    diag_df$custom_palette.black <- "black"
+    dummy_break_colors <- list(breaks = c(0, 1), colors = c("black"))
+    
+    box_theme <- theme_minimal(base_size = 14) +
+      theme(
+        panel.grid = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_line(color = "black", linewidth = 0.8),
+        axis.line.y.right = element_blank(),
+        axis.line.x.top = element_blank(),
+        axis.ticks = element_line(color = "black", linewidth = 0.5),
+        axis.text = element_text(color = "black"),
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 13)
+      )
+    
+    for (tail in c(10, 25)) {
+      
+      exp_prop <- tail / 100
+      hot_count_col  <- paste0("hot",  tail, "_count")
+      cold_count_col <- paste0("cold", tail, "_count")
+      hot_prop_col   <- paste0("hot",  tail, "_prop")
+      cold_prop_col  <- paste0("cold", tail, "_prop")
+      
+      diag_df[[hot_prop_col]]  <- diag_df[[hot_count_col]]  / diag_df$total_richness
+      diag_df[[cold_prop_col]] <- diag_df[[cold_count_col]] / diag_df$total_richness
+      diag_df[[paste0("hot",  tail, "_enrich")]]  <- diag_df[[hot_prop_col]]  - exp_prop
+      diag_df[[paste0("cold", tail, "_enrich")]] <- diag_df[[cold_prop_col]] - exp_prop
+      
+      cat("\n============================================================\n")
+      cat(sprintf("DIAGNOSTICS FOR %d%% TAILS (expected fraction = %.2f)\n", tail, exp_prop))
+      cat("============================================================\n")
+      
+      cat("\n=== A) Do mean rates track HOT/COLD counts? (counts can be richness-driven) ===\n")
+      cat(sprintf("Spearman cor(mean_rate_rw, %s)  = %.4f\n", hot_count_col,
+                  cor(diag_df$mean_rate_rw, diag_df[[hot_count_col]], method = "spearman")))
+      cat(sprintf("Spearman cor(mean_rate_rw, %s) = %.4f\n", cold_count_col,
+                  cor(diag_df$mean_rate_rw, diag_df[[cold_count_col]], method = "spearman")))
+      
+      cat("\n=== B) Do mean rates track HOT/COLD proportions? (key swamping diagnostic) ===\n")
+      cat(sprintf("Spearman cor(mean_rate_rw, %s)   = %.4f\n", hot_prop_col,
+                  cor(diag_df$mean_rate_rw, diag_df[[hot_prop_col]], method = "spearman")))
+      cat(sprintf("Spearman cor(mean_rate_rw, %s)  = %.4f\n", cold_prop_col,
+                  cor(diag_df$mean_rate_rw, diag_df[[cold_prop_col]], method = "spearman")))
+      
+      cat("\n=== C) Are the highest mean-rate cells enriched for hot lineages / depleted of cold? ===\n")
+      summ <- data.frame(
+        group = c("bottom 90% mean-rate cells", "top 10% mean-rate cells"),
+        n = c(sum(!diag_df$high_mean10pct), sum(diag_df$high_mean10pct)),
+        mean_hot_prop = c(mean(diag_df[[hot_prop_col]][!diag_df$high_mean10pct]),
+                          mean(diag_df[[hot_prop_col]][diag_df$high_mean10pct])),
+        median_hot_prop = c(median(diag_df[[hot_prop_col]][!diag_df$high_mean10pct]),
+                            median(diag_df[[hot_prop_col]][diag_df$high_mean10pct])),
+        mean_cold_prop = c(mean(diag_df[[cold_prop_col]][!diag_df$high_mean10pct]),
+                           mean(diag_df[[cold_prop_col]][diag_df$high_mean10pct])),
+        median_cold_prop = c(median(diag_df[[cold_prop_col]][!diag_df$high_mean10pct]),
+                             median(diag_df[[cold_prop_col]][diag_df$high_mean10pct]))
+      )
+      print(summ)
+      
+      cat("\n=== D) Sensitivity: correlations after filtering out very species-poor cells ===\n")
+      for (minN in c(1, 10, 20)) {
+        sub <- diag_df[diag_df$total_richness >= minN, ]
+        cat(sprintf("\n-- min richness >= %d (n=%d) --\n", minN, nrow(sub)))
+        cat(sprintf("Spearman cor(mean_rate_rw, %s)  = %.4f\n", hot_prop_col,
+                    cor(sub$mean_rate_rw, sub[[hot_prop_col]], method = "spearman")))
+        cat(sprintf("Spearman cor(mean_rate_rw, %s) = %.4f\n", cold_prop_col,
+                    cor(sub$mean_rate_rw, sub[[cold_prop_col]], method = "spearman")))
+      }
+      
+      # Plots (objects) for this tail set
+      set.seed(1)
+      p1_tmp <- generate_scatter_with_colorbar(
+        data = diag_df[sample(seq_len(nrow(diag_df))), ],
+        x_var = hot_prop_col,
+        y_var = "mean_rate_rw",
+        color_var = "custom_palette.black",
+        color_palette = dummy_break_colors,
+        title = sprintf("Mean rates vs fast%d proportion (%.2f = global expectation)", tail, exp_prop),
+        x_label = sprintf("Fraction of local assemblage in top %d%% fast lineages", tail),
+        y_label = "Mean lineage rate (range-weighted; log scale)",
+        point_size = 2, point_alpha = 0.5,
+        bar_title = NULL,
+        x_limits = c(0, 1),
+        xmin_perc = 0.80, ymin_perc = 0.80, y_nudge = 0.3,
+        zero_intercept = FALSE,
+        colorbar = FALSE
+      ) +
+        geom_vline(xintercept = exp_prop, linetype = 2) +
+        geom_smooth(
+          data = diag_df,
+          mapping = aes(x = .data[[hot_prop_col]], y = mean_rate_rw),
+          method = "lm", formula = y ~ x,
+          color = "red", se = FALSE,
+          inherit.aes = FALSE
+        )
+      
+      set.seed(1)
+      p2_tmp <- generate_scatter_with_colorbar(
+        data = diag_df[sample(seq_len(nrow(diag_df))), ],
+        x_var = cold_prop_col,
+        y_var = "mean_rate_rw",
+        color_var = "custom_palette.black",
+        color_palette = dummy_break_colors,
+        title = sprintf("Mean rates vs slow%d proportion (%.2f = global expectation)", tail, exp_prop),
+        x_label = sprintf("Fraction of local assemblage in bottom %d%% slow lineages", tail),
+        y_label = "Mean lineage rate (range-weighted; log scale)",
+        point_size = 2, point_alpha = 0.5,
+        bar_title = NULL,
+        x_limits = c(0, 1),
+        xmin_perc = 0.80, ymin_perc = 0.80, y_nudge = 0.3,
+        zero_intercept = FALSE,
+        colorbar = FALSE
+      ) +
+        geom_vline(xintercept = exp_prop, linetype = 2) +
+        geom_smooth(
+          data = diag_df,
+          mapping = aes(x = .data[[cold_prop_col]], y = mean_rate_rw),
+          method = "lm", formula = y ~ x,
+          color = "red", se = FALSE,
+          inherit.aes = FALSE
+        )
+      
+      p3_tmp <- ggplot(diag_df, aes(x = factor(high_mean10pct), y = .data[[hot_prop_col]])) +
+        geom_boxplot(outlier.size = 0.3, color = "black", fill = "white") +
+        geom_hline(yintercept = exp_prop, linetype = 2) +
+        labs(
+          x = "Cell in top 10% of mean lineage rate?",
+          y = sprintf("fast%d proportion", tail),
+          title = sprintf("Are high mean-rate cells enriched for fast%d lineages?", tail)
+        ) +
+        box_theme
+      
+      p4_tmp <- ggplot(diag_df, aes(x = factor(high_mean10pct), y = .data[[cold_prop_col]])) +
+        geom_boxplot(outlier.size = 0.3, color = "black", fill = "white") +
+        geom_hline(yintercept = exp_prop, linetype = 2) +
+        labs(
+          x = "Cell in top 10% of mean lineage rate?",
+          y = sprintf("slow%d proportion", tail),
+          title = sprintf("Are high mean-rate cells depleted of slow%d lineages?", tail)
+        ) +
+        box_theme
+      
+      if (tail == 10) {
+        p1 <- p1_tmp; p2 <- p2_tmp; p3 <- p3_tmp; p4 <- p4_tmp
+      } else {
+        p1_25 <- p1_tmp; p2_25 <- p2_tmp; p3_25 <- p3_tmp; p4_25 <- p4_tmp
+      }
+    }
+    
+    cat("\nDone: diagnostics (10% + 25%) and required plot objects created.\n")
+    
+    # ===================================================================================
+    # F) FINAL 25%-only summary figure (your tuned layout)
+    # ===================================================================================
+    cat("\n--- F) Writing FINAL 25%-only summary figure PDF ---\n")
+    
+    # Shrink legends vertically (but keep the original legend objects intact)
+    leg_fast25_v <- vshrink_legend(leg_fast25)
+    leg_slow25_v <- vshrink_legend(leg_slow25)
+    leg_hot25_v  <- vshrink_legend(leg_hot25_frac)
+    leg_cold25_v <- vshrink_legend(leg_cold25_frac)
+    
+    panel_ct_hot25  <- wrap_map_panel(map_fast25,     leg_fast25_v)
+    panel_ct_cold25 <- wrap_map_panel(map_slow25,     leg_slow25_v)
+    panel_fr_hot25  <- wrap_map_panel(map_hot25_frac, leg_hot25_v)
+    panel_fr_cold25 <- wrap_map_panel(map_cold25_frac,leg_cold25_v)
+    
+    # Diagnostics label wrapping (E/F: title + x + y; G/H: title only)
+    p1_25_adj <- p1_25 +
+      labs(
+        title = "Mean rates vs fast25 proportion\n(0.25 = global expectation)",
+        x = "Fraction of local assemblage\nin top 25% fast lineages",
+        y = "Mean lineage rate\n(range-weighted; log scale)"
+      ) + diag_pad
+    
+    p2_25_adj <- p2_25 +
+      labs(
+        title = "Mean rates vs slow25 proportion\n(0.25 = global expectation)",
+        x = "Fraction of local assemblage\nin bottom 25% slow lineages",
+        y = "Mean lineage rate\n(range-weighted; log scale)"
+      ) + diag_pad
+    
+    # Convert p3_25 / p4_25 to vioplot-like violins WITHOUT rebuilding from scratch
+    p3_25_vio <- p3_25
+    p3_25_vio$layers <- Filter(
+      function(l) !(inherits(l$geom, "GeomBoxplot") || inherits(l$geom, "GeomHline") || inherits(l$geom, "GeomViolin")),
+      p3_25_vio$layers
+    )
+    p3_25_vio <- p3_25_vio +
+      geom_violin(trim = TRUE, scale = "width", adjust = 3, color = "black", fill = "grey92") +
+      geom_boxplot(width = 0.12, outlier.shape = NA, fill = "black", color = "black") +
+      stat_summary(fun = median, geom = "point", shape = 21, size = 2.2, fill = "white", color = "white") +
+      geom_hline(yintercept = 0.25, linetype = 2) +
+      coord_cartesian(ylim = c(0, 1))
+    
+    p4_25_vio <- p4_25
+    p4_25_vio$layers <- Filter(
+      function(l) !(inherits(l$geom, "GeomBoxplot") || inherits(l$geom, "GeomHline") || inherits(l$geom, "GeomViolin")),
+      p4_25_vio$layers
+    )
+    p4_25_vio <- p4_25_vio +
+      geom_violin(trim = TRUE, scale = "width", adjust = 3, color = "black", fill = "grey92") +
+      geom_boxplot(width = 0.12, outlier.shape = NA, fill = "black", color = "black") +
+      stat_summary(fun = median, geom = "point", shape = 21, size = 2.2, fill = "white", color = "white") +
+      geom_hline(yintercept = 0.25, linetype = 2) +
+      coord_cartesian(ylim = c(0, 1))
+    
+    p3_25_adj <- p3_25_vio + labs(title = "Are high mean-rate cells enriched\nfor fast25 lineages?") + diag_pad
+    p4_25_adj <- p4_25_vio + labs(title = "Are high mean-rate cells depleted\nof slow25 lineages?") + diag_pad
+    
+    panel_p1_25 <- wrap_diag_panel(p1_25_adj)
+    panel_p2_25 <- wrap_diag_panel(p2_25_adj)
+    panel_p3_25 <- wrap_diag_panel(p3_25_adj)
+    panel_p4_25 <- wrap_diag_panel(p4_25_adj)
+    
+    final_fig <-
+      (panel_ct_hot25 | panel_ct_cold25) /
+      (panel_fr_hot25 | panel_fr_cold25) /
+      (panel_p1_25 | panel_p2_25) /
+      (panel_p3_25 | panel_p4_25)
+    
+    final_fig <- final_fig +
+      plot_layout(heights = diag_row_heights) +
+      plot_annotation(tag_levels = "A") &
+      theme(
+        plot.tag = element_text(size = 16, face = "bold"),
+        plot.tag.position = c(0.01, 0.99)
+      )
+    
+    pdf("SuppFig17_summary_25only_counts_fractions_diagnostics.pdf", height = 16, width = 16)
+    print(final_fig)
+    dev.off()
+    
+    cat("\nSaved: SuppFig17_summary_25only_counts_fractions_diagnostics.pdf\n")
+    cat("=== DONE ===\n")
+  }
