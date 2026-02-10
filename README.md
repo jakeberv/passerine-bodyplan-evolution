@@ -28,8 +28,6 @@
 
 This repository provides the code to replicate the primary analysis pipeline in our study, which integrates phylogenetic comparative methods with spatial statistics. The workflow is divided into two primary R scripts, and two scripts containing new functions relevant to each. Each primary script loads dependencies, sets up a working directory, and then executes the analytical pipeline.
 
-*To facilitate reproducibility, most of the “heavy” execution lines in the scripts are commented out, allowing the script to load preprocessed `.RDS` objects. `.RDS` files are a standard format for storing R objects, enabling the preservation of data states across sessions.*
-
 > [!NOTE]
 > **Note on reuse and analysis**
 >
