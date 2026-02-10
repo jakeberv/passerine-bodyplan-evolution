@@ -2,11 +2,22 @@
 
 ## Rates of passerine body plan evolution in space and time
 
-**Authors:** Jacob S. Berv¹², Charlotte M. Probst¹, Santiago Claramunt³,⁴, J. Ryan Shipley⁵, Matt Friedman²,⁶,⁷, Stephen A. Smith⁸, David F. Fouhey⁹,¹⁰, Brian C. Weeks¹
+**Authors:** Jacob S. Berv¹², Charlotte M. Probst¹, Santiago Claramunt³⁴, J. Ryan Shipley⁵, Matt Friedman²⁶⁷, Stephen A. Smith⁸, David F. Fouhey⁹¹⁰, Brian C. Weeks¹
 
-**Affiliations:** ¹ School for Environment and Sustainability, University of Michigan, Ann Arbor, MI, USA ² Michigan Institute for Data Science and AI in Society, University of Michigan, Ann Arbor, MI, USA ³ Department of Biological Sciences, University of New Orleans, New Orleans, LA, USA ⁴ Department of Ecology and Evolutionary Biology, University of Toronto, Toronto, ON, Canada ⁵ Department of Fish Ecology and Evolution, Swiss Federal Institute of Aquatic Science and Technology (Eawag), Kastanienbaum, Switzerland ⁶ Museum of Paleontology, University of Michigan, Ann Arbor, MI, USA ⁷ Department of Earth and Environmental Sciences, University of Michigan, Ann Arbor, MI, USA ⁸ Department of Ecology and Evolutionary Biology, University of Michigan, Ann Arbor, MI, USA ⁹ Department of Computer Science, Courant Institute of Mathematical Sciences, New York University, New York, NY, USA ¹⁰ Department of Electrical and Computer Engineering, Tandon School of Engineering, New York University, New York, NY, USA
+**Affiliations:**
+- School for Environment and Sustainability, University of Michigan (Ann Arbor, MI, USA)
+- Michigan Institute for Data Science and AI in Society, University of Michigan (Ann Arbor, MI, USA)
+- Department of Biological Sciences, University of New Orleans (New Orleans, LA, USA)
+- Department of Ecology and Evolutionary Biology, University of Toronto (Toronto, ON, Canada)
+- Department of Fish Ecology and Evolution, Swiss Federal Institute of Aquatic Science and Technology (Eawag) (Kastanienbaum, Switzerland)
+- Museum of Paleontology, University of Michigan (Ann Arbor, MI, USA)
+- Department of Earth and Environmental Sciences, University of Michigan (Ann Arbor, MI, USA)
+- Department of Ecology and Evolutionary Biology, University of Michigan (Ann Arbor, MI, USA)
+- Department of Computer Science, Courant Institute of Mathematical Sciences, New York University (New York, NY, USA)
+- Department of Electrical and Computer Engineering, Tandon School of Engineering, New York University (New York, NY, USA)
 
-**Corresponding Authors:** Jacob S. Berv, Brian C. Weeks
+**Corresponding authors:** Jacob S. Berv; Brian C. Weeks
+
 
 ------------------------------------------------------------------------
 
