@@ -26,11 +26,29 @@
 - `SpatialAnalyses.R` + `SpatialAnalyses-functions.R` → species matching, range/grid processing, climate joins, spatial models, and figures (Figures 1B–D, 3–4).
 - Heavy steps are cached as `.RDS` files (archived on Zenodo); scripts read those by default.
 
-This repository provides the code to replicate the primary analysis pipeline in our study, which integrates phylogenetic comparative methods with spatial statistics. The workflow is divided into two primary R scripts, and two scripts containing new functions relevant to each. Each primary script loads dependencies, sets up a working directory, and then executes the analytical pipeline.
+This repository provides the code to replicate the primary analysis pipeline in our study, which integrates phylogenetic comparative methods with spatial statistics. The workflow is divided into two primary R scripts and two function libraries. Each primary script loads dependencies, checks for the `data/` directory, and executes the analysis pipeline; some optional blocks reuse helper definitions across the two function files.
+
+---
+
+## Table of Contents
+
+- [Quickstart](#quickstart)
+- [Analytical Workflow](#analytical-workflow)
+- [Data and Phylogeny](#data-and-phylogeny)
+- [Citation](#citation)
+- [Reproducibility Details](#reproducibility-details)
+- [License](#license)
+- [Contact](#contact)
 
 ---
 
 ## Quickstart
+
+### Known caveats
+
+- Cached inputs are used for most heavy steps, but one live GBIF rematch call remains uncommented in `SpatialAnalyses.R`.
+- The scripts contain macOS/Unix-specific calls (`quartz()`, `pbmclapply`/`mclapply`), so Linux/macOS is the supported runtime target for full execution.
+- `TemporalAnalyses.R` sources a pinned remote helper (`fastdivrate` `dr.R`) at runtime.
 
 ### System requirements
 
@@ -50,7 +68,7 @@ sudo apt-get update
 sudo apt-get install -y gdal-bin libgdal-dev libgeos-dev libproj-dev libudunits2-dev libv8-dev
 ```
 
-Windows: - Install **Rtools** (matching your R version). `sf`, `terra`, `lwgeom`, and `V8` will install from CRAN binaries.
+Windows: - Install **Rtools** (matching your R version). `sf`, `terra`, `lwgeom`, and `V8` can install from CRAN binaries, but this repository's scripts use macOS/Unix-specific calls (`quartz()`, `pbmclapply`/`mclapply`) in active/optional blocks, so Linux/macOS is the supported runtime target for full execution.
 
 > If `cairo_pdf()` fails on Linux, install Cairo headers: `sudo apt-get install libcairo2-dev`.
 
@@ -68,7 +86,8 @@ cd passerine-bodyplan-evolution
 
 ``` r
 
-# CRAN packages (everything you load except h3 + parallel)
+# CRAN packages used by active script paths
+# (h3 is installed from GitHub below; parallel is base R)
 cran_pkgs <- c(
   "ape","phytools","mvMORPH",
   "future","future.apply","viridis",
@@ -78,7 +97,10 @@ cran_pkgs <- c(
   "rgbif","lwgeom","sf","data.table","pbapply","progressr",
   "h3jsr","geomorph","igraph","ggplot2","rnaturalearth","rnaturalearthdata",
   "tidyterra","spdep","terra","spatialreg",
-  "MASS","dplyr","stringr","stargazer"
+  "MASS","dplyr","stringr","stargazer",
+  "TeachingDemos","phangorn","ggrain","ggsignif","circlize","gridExtra",
+  "corpcor","fastmatch","e1071","dispRity","caper","gplots",
+  "matrixStats","geiger"
 )
 
 need <- setdiff(cran_pkgs, rownames(installed.packages()))
@@ -90,6 +112,17 @@ if (!requireNamespace("h3", quietly = TRUE)) {
   devtools::install_github("crazycapivara/h3-r")
 }
 
+if (!requireNamespace("jntools", quietly = TRUE)) {
+  if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")
+  devtools::install_github("joelnitta/jntools")
+}
+
+# Bioconductor package used by active figure code paths
+if (!requireNamespace("ComplexHeatmap", quietly = TRUE)) {
+  if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+  BiocManager::install("ComplexHeatmap", ask = FALSE, update = FALSE)
+}
+
 # parallel is part of base R; no install required
 message("Done. If there were no errors above, all requested packages are installed.")
 
@@ -99,52 +132,60 @@ message("Done. If there were no errors above, all requested packages are install
 > `TemporalAnalyses.R` sources `fastdivrate`’s `dr.R`:
 >
 > ``` r
-> source('https://raw.githubusercontent.com/jonchang/fastdivrate/refs/heads/master/R/dr.R')
+> source('https://raw.githubusercontent.com/jonchang/fastdivrate/ee8fcd0b7e623253d4d1225dadd10ffec966b8dc/R/dr.R')
 > ```
 
 ---
 
 ### 3) Prepare input data
 
-Create a `data/` folder at the repo root and place/copy the cached inputs there. These are the objects the scripts expect (relative to repo root):
+Run scripts from the repository root. Cached inputs are used for most heavy steps, and scripts expect a populated `data/` directory.
+
+Use `data/README.md` as the canonical data manifest. The minimum required structure is:
 
 ```         
 data/
-  # multivariate trait objects used in temporal analyses
-  dat.mvgls.RDS
-  sampled_cv.RDS
-  sampled_cv_shift_metrics_8_08_25.RDS
-
-  # results from the shift search (consumed by both workflows)
-  new_bifrost/
-    min10.ic20.{bic,gic}.RDS
-    min10.ic40.{bic,gic}.RDS
-    min20.ic20.{bic,gic}.RDS
-    min20.ic40.{bic,gic}.RDS
-    min30.ic20.{bic,gic}.RDS
-    min30.ic40.{bic,gic}.RDS
-
-  # GBIF name matching caches
-  gbif_matches.RDS
-  ranges_gbif_matches.RDS
-
-  # passerine range/grid objects & helpers
-  passeriformes.filtered.1_res3.RDS
-  passeriformes.filtered.12_res3.RDS
-  passeriformes.filtered.merged.deduplicated.1.RDS
-  passeriformes.filtered.merged.deduplicated.12.RDS
-  resident_species1_filter_res3.RDS
-  resident_species12_filter_res3.RDS
-  spatial_coords.RDS
-  spatial_coords.12.RDS
-  trMat.1000.idw.RDS
+  temporal/
+    01_core_inputs/external_skelevision/
+      dat.mvgls.RDS
+      sampled_cv.RDS
+      ythlida_supertree.rescale.tre
+    02_shift_search/new_bifrost/
+      min10.ic20.{bic,gic}.RDS
+      min10.ic40.{bic,gic}.RDS
+      min20.ic20.{bic,gic}.RDS
+      min20.ic40.{bic,gic}.RDS
+      min30.ic20.{bic,gic}.RDS
+      min30.ic40.{bic,gic}.RDS
+    03_simulations/
+      simresults_*_{BIC,GIC}{2,10}.RDS
+    04_false_negative_outputs/
+      output_FN.*.{bic,gic}.RDS
+      output_FN.*.{bic,gic}.corr.RDS
+    05_climate_reference/
+      aba6853_tables_s8_s34.xlsx
+  spatial/
+    00_raw_range_source/
+      ranges_4-16-22_multipolygons
+    01_taxonomy_matching/
+      gbif_matches.RDS
+      ranges_gbif_matches.RDS
+    02_ranges_and_filters/
+      passeriformes.filtered*.RDS
+      resident_species*_filter_res3.RDS
+    03_grid_climate_weights/
+      spatial_coords.RDS
+      spatial_coords.12.RDS
+      trMat.1000.idw.RDS
+    04_temporal_bridge_inputs/
+      sampled_cv_shift_metrics_8_08_25.RDS
 ```
 
 ---
 
 **External datasets:**
-- **WorldClim 2.1** bioclim rasters (5 arc-min), especially **BioClim 4 (temperature seasonality)**. If recomputing climate summaries, download from WorldClim and set a directory path in the spatial functions; by default the script uses cached `spatial_coords*.RDS`.
-- **GBIF** backbone is accessed via `{rgbif}`; we rely on the cached `.RDS` matches by default.
+- **WorldClim 2.1** bioclim rasters (5 arc-min) are staged under `data/spatial/05_bioclim_rasters/wc2.1_5m_bio/` for reruns of climate extraction blocks.
+- **GBIF** backbone is mostly cached via `.RDS` files, but one live rematch call remains uncommented in `SpatialAnalyses.R` (`rgbif::name_backbone_checklist(...)`).
 - Country boundaries via `{rnaturalearth}` are retrieved at runtime.
 
 DOIs/links to archives (e.g., Zenodo) will be added when paper is published.
@@ -154,7 +195,9 @@ DOIs/links to archives (e.g., Zenodo) will be added when paper is published.
 -   **Install errors for `sf`/`terra`/`lwgeom`:** ensure GDAL/GEOS/PROJ and, on Linux, `libudunits2-dev` are installed (see commands above).
 -   **`h3` / `h3jsr` errors:** install system **V8** (`brew install v8` or `sudo apt-get install libv8-dev`) then reinstall the packages.
 -   **Long runtimes / memory:** reduce `{future}` workers or rely on the cached `.RDS` files rather than recomputing from raw sources.
--   **`ggrain` missing:** comment out `library(ggrain)` in `TemporalAnalyses-functions.R` if installation fails; the remaining code will run.
+-   **`ggrain` missing:** install `ggrain` or skip the raincloud plot block that calls `create_raincloud_with_wilcox()`; that plotting section will fail without it.
+-   **Strict cached/offline spatial run:** comment out the live GBIF rematch line in `SpatialAnalyses.R` and use cached matching objects.
+-   **Temporal clade annotation helper:** the `extract_clade_info()` block in `TemporalAnalyses.R` uses `name_backbone_checklist()`; source `SpatialAnalyses-functions.R` in the same session or replace with `rgbif::name_backbone_checklist()`.
 
 ---
 
@@ -207,102 +250,13 @@ If you use the code or data from this repository, please cite our paper:
 
 > Berv, J.S., Probst, C.M., Claramunt, S., Shipley, J.R., Friedman, M., Smith, S.A., Fouhey, D.F., & Weeks, B.C. (Year). Rates of passerine body plan evolution in time and space. *Journal Placeholder*, Volume(Issue), pages. [DOI placeholder]
 
+## Reproducibility Details
+
+Complete session/version provenance and full references are preserved in:
+
+- [docs/reproducibility.md](docs/reproducibility.md)
+
 ---
-
-# System and Package Versions (Temporal Analyses)
-
-Analyses were conducted using the R Statistical language (version 4.4.2; R Core Team, 2024) on macOS Sequoia 15.6, using the packages boot (version 1.3.31; Angelo Canty, Ripley, 2024), maps (version 3.4.2.1; Becker OScbRA et al., 2024), future (version 1.34.0; Bengtsson H, 2021), future.apply (version 1.11.3; Bengtsson H, 2021), classInt (version 0.4.10; Bivand R, 2023), intervals (version 0.15.5; Bourgon R, 2024), rgbif (version 3.8.1.2; Chamberlain S et al., 2025), mvMORPH (version 1.2.1; Clavel J et al., 2015), fitdistrplus (version 1.2.2; Delignette-Muller ML, Dutang C, 2015), viridisLite (version 0.4.2; Garnier et al., 2023), viridis (version 0.6.5; Garnier et al., 2024), lubridate (version 1.9.3; Grolemund G, Wickham H, 2011), phylolm (version 2.6.5; Ho LST, Ane C, 2014), palaeoverse (version 1.4.0; Jones LA et al., 2023), subplex (version 1.9; King AA, Rowan T, 2024), pbmcapply (version 1.5.1; Kuang K et al., 2022), report (version 0.6.1; Makowski D et al., 2023), HDInterval (version 0.2.4; Meredith M, Kruschke J, 2022), univariateML (version 1.5.0; Moss J, 2019), tibble (version 3.2.1; Müller K, Wickham H, 2023), RColorBrewer (version 1.1.3; Neuwirth E, 2022), ape (version 5.8; Paradis E, Schliep K, 2019), patchwork (version 1.3.0.9000; Pedersen T, 2024), phytools (version 2.3.0; Revell L, 2024), corpcor (version 1.6.10; Schafer J et al., 2021), phangorn (version 2.12.1; Schliep K, 2011), TeachingDemos (version 2.13; Snow G, 2024), evd (version 2.3.7.1; Stephenson AG, 2002), survival (version 3.7.0; Therneau T, 2024), MASS (version 7.3.61; Venables WN, Ripley BD, 2002), ggplot2 (version 3.5.1; Wickham H, 2016), forcats (version 1.0.0; Wickham H, 2023), stringr (version 1.5.1; Wickham H, 2023), tidyverse (version 2.0.0; Wickham H et al., 2019), readxl (version 1.4.3; Wickham H, Bryan J, 2023), dplyr (version 1.1.4; Wickham H et al., 2023), purrr (version 1.0.2; Wickham H, Henry L, 2023), readr (version 2.1.5; Wickham H et al., 2024), scales (version 1.3.0; Wickham H et al., 2023) and tidyr (version 1.3.1; Wickham H et al., 2024).
-
-## References
-
--   Angelo Canty, B. D. Ripley (2024). *boot: Bootstrap R (S-Plus) Functions*. R package version 1.3-31. A. C. Davison, D. V. Hinkley (1997). *Bootstrap Methods and Their Applications*. Cambridge University Press, Cambridge. ISBN 0-521-57391-2, <doi:10.1017/CBO9780511802843>.
--   Becker OScbRA, Minka ARWRvbRBEbTP, Deckmyn. A (2024). *maps: Draw Geographical Maps*. R package version 3.4.2.1, <https://CRAN.R-project.org/package=maps>.
--   Bengtsson H (2021). “A Unifying Framework for Parallel and Distributed Processing in R using Futures.” *The R Journal*, *13*(2), 208-227. <doi:10.32614/RJ-2021-048> <https://doi.org/10.32614/RJ-2021-048>, <https://doi.org/10.32614/RJ-2021-048>.
--   Bengtsson H (2021). “A Unifying Framework for Parallel and Distributed Processing in R using Futures.” *The R Journal*, *13*(2), 208-227. <doi:10.32614/RJ-2021-048> <https://doi.org/10.32614/RJ-2021-048>, <https://doi.org/10.32614/RJ-2021-048>.
--   Bivand R (2023). *classInt: Choose Univariate Class Intervals*. R package version 0.4-10, <https://CRAN.R-project.org/package=classInt>.
--   Bourgon R (2024). *intervals: Tools for Working with Points and Intervals*. R package version 0.15.5, <https://CRAN.R-project.org/package=intervals>.
--   Chamberlain S, Barve V, Mcglinn D, Oldoni D, Desmet P, Geffert L, Ram K (2025). *rgbif: Interface to the Global Biodiversity Information Facility API*. R package version 3.8.1.2, <https://CRAN.R-project.org/package=rgbif>. Chamberlain S, Boettiger C (2017). “R Python, and Ruby clients for GBIF species occurrence data.” *PeerJ PrePrints*. <https://doi.org/10.7287/peerj.preprints.3304v1>.
--   Clavel J, Escarguel G, Merceron G (2015). “mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data.” *Methods in Ecology and Evolution*, *6*, 1311-1319.
--   Delignette-Muller ML, Dutang C (2015). “fitdistrplus: An R Package for Fitting Distributions.” *Journal of Statistical Software*, *64*(4), 1-34. <doi:10.18637/jss.v064.i04> <https://doi.org/10.18637/jss.v064.i04>.
--   Garnier, Simon, Ross, Noam, Rudis, Robert, Camargo, Pedro A, Sciaini, Marco, Scherer, Cédric (2023). *viridis(Lite) - Colorblind-Friendly Color Maps for R*. <doi:10.5281/zenodo.4678327> <https://doi.org/10.5281/zenodo.4678327>, viridisLite package version 0.4.2, <https://sjmgarnier.github.io/viridis/>.
--   Garnier, Simon, Ross, Noam, Rudis, Robert, Camargo, Pedro A, Sciaini, Marco, Scherer, Cédric (2024). *viridis(Lite) - Colorblind-Friendly Color Maps for R*. <doi:10.5281/zenodo.4679423> <https://doi.org/10.5281/zenodo.4679423>, viridis package version 0.6.5, <https://sjmgarnier.github.io/viridis/>.
--   Grolemund G, Wickham H (2011). “Dates and Times Made Easy with lubridate.” *Journal of Statistical Software*, *40*(3), 1-25. <https://www.jstatsoft.org/v40/i03/>.
--   Ho LST, Ane C (2014). “A linear-time algorithm for Gaussian and non-Gaussian trait evolution models.” *Systematic Biology*, *63*, 397-408.
--   Jones LA, Gearty W, Allen BJ, Eichenseer K, Dean CD, Galván S, Kouvari M, Godoy PL, Nicholl CSC, Buffan L, Dillon EM, Flannery-Sutherland JT, Chiarenza AA (2023). “palaeoverse: A community-driven R package to support palaeobiological analysis.” *Methods in Ecology and Evolution*, *14(9)*, 2205-2215. <doi:10.1111/2041-210X.14099> <https://doi.org/10.1111/2041-210X.14099>.
--   King AA, Rowan T (2024). *subplex: Unconstrained Optimization using the Subplex Algorithm*. R package version 1.9, <https://CRAN.R-project.org/package=subplex>.
--   Kuang K, Kong Q, Napolitano F (2022). \_pbmcapply: Tracking the Progress of Mc\*pply with Progress Bar\_. R package version 1.5.1, <https://CRAN.R-project.org/package=pbmcapply>.
--   Makowski D, Lüdecke D, Patil I, Thériault R, Ben-Shachar M, Wiernik B (2023). “Automated Results Reporting as a Practical Tool to Improve Reproducibility and Methodological Best Practices Adoption.” *CRAN*. <https://easystats.github.io/report/>.
--   Meredith M, Kruschke J (2022). *HDInterval: Highest (Posterior) Density Intervals*. R package version 0.2.4, <https://CRAN.R-project.org/package=HDInterval>.
--   Moss J (2019). “univariateML: An R package for maximum likelihood estimation of univariate densities.” *Journal of Open Source Software*, *4*(44), 1863. <doi:10.21105/joss.01863> <https://doi.org/10.21105/joss.01863>, <https://doi.org/10.21105/joss.01863>.
--   Müller K, Wickham H (2023). *tibble: Simple Data Frames*. R package version 3.2.1, <https://CRAN.R-project.org/package=tibble>.
--   Neuwirth E (2022). *RColorBrewer: ColorBrewer Palettes*. R package version 1.1-3, <https://CRAN.R-project.org/package=RColorBrewer>.
--   Paradis E, Schliep K (2019). “ape 5.0: an environment for modern phylogenetics and evolutionary analyses in R.” *Bioinformatics*, *35*, 526-528. <doi:10.1093/bioinformatics/bty633> <https://doi.org/10.1093/bioinformatics/bty633>.
--   Pedersen T (2024). *patchwork: The Composer of Plots*. R package version 1.3.0.9000, commit 2695a9f0200b7fd73f295d5c8a3e13e3943078c5, <https://github.com/thomasp85/patchwork>.
--   R Core Team (2024). *R: A Language and Environment for Statistical Computing*. R Foundation for Statistical Computing, Vienna, Austria. <https://www.R-project.org/>.
--   Revell L (2024). “phytools 2.0: an updated R ecosystem for phylogenetic comparative methods (and other things).” *PeerJ*, *12*, e16505. <doi:10.7717/peerj.16505> <https://doi.org/10.7717/peerj.16505>.
--   Schafer J, Opgen-Rhein R, Zuber V, Ahdesmaki M, Silva APD, Strimmer. K (2021). *corpcor: Efficient Estimation of Covariance and (Partial) Correlation*. R package version 1.6.10, <https://CRAN.R-project.org/package=corpcor>.
--   Schliep K (2011). “phangorn: phylogenetic analysis in R.” *Bioinformatics*, *27*(4), 592-593. <doi:10.1093/bioinformatics/btq706> <https://doi.org/10.1093/bioinformatics/btq706>. Schliep K, Potts A, Morrison D, Grimm G (2017). “Intertwining phylogenetic trees and networks.” *Methods in Ecology and Evolution*, *8*(10), 1212-1220.
--   Snow G (2024). *TeachingDemos: Demonstrations for Teaching and Learning*. R package version 2.13, <https://CRAN.R-project.org/package=TeachingDemos>.
--   Stephenson AG (2002). “evd: Extreme Value Distributions.” *R News*, *2*(2), 31-32. <https://CRAN.R-project.org/doc/Rnews/>.
--   Therneau T (2024). *A Package for Survival Analysis in R*. R package version 3.7-0, <https://CRAN.R-project.org/package=survival>. Terry M. Therneau, Patricia M. Grambsch (2000). *Modeling Survival Data: Extending the Cox Model*. Springer, New York. ISBN 0-387-98784-3.
--   Venables WN, Ripley BD (2002). *Modern Applied Statistics with S*, Fourth edition. Springer, New York. ISBN 0-387-95457-0, <https://www.stats.ox.ac.uk/pub/MASS4/>.
--   Wickham H (2016). *ggplot2: Elegant Graphics for Data Analysis*. Springer-Verlag New York. ISBN 978-3-319-24277-4, <https://ggplot2.tidyverse.org>.
--   Wickham H (2023). *forcats: Tools for Working with Categorical Variables (Factors)*. R package version 1.0.0, <https://CRAN.R-project.org/package=forcats>.
--   Wickham H (2023). *stringr: Simple, Consistent Wrappers for Common String Operations*. R package version 1.5.1, <https://CRAN.R-project.org/package=stringr>.
--   Wickham H, Averick M, Bryan J, Chang W, McGowan LD, François R, Grolemund G, Hayes A, Henry L, Hester J, Kuhn M, Pedersen TL, Miller E, Bache SM, Müller K, Ooms J, Robinson D, Seidel DP, Spinu V, Takahashi K, Vaughan D, Wilke C, Woo K, Yutani H (2019). “Welcome to the tidyverse.” *Journal of Open Source Software*, *4*(43), 1686. <doi:10.21105/joss.01686> <https://doi.org/10.21105/joss.01686>.
--   Wickham H, Bryan J (2023). *readxl: Read Excel Files*. R package version 1.4.3, <https://CRAN.R-project.org/package=readxl>.
--   Wickham H, François R, Henry L, Müller K, Vaughan D (2023). *dplyr: A Grammar of Data Manipulation*. R package version 1.1.4, <https://CRAN.R-project.org/package=dplyr>.
--   Wickham H, Henry L (2023). *purrr: Functional Programming Tools*. R package version 1.0.2, <https://CRAN.R-project.org/package=purrr>.
--   Wickham H, Hester J, Bryan J (2024). *readr: Read Rectangular Text Data*. R package version 2.1.5, <https://CRAN.R-project.org/package=readr>.
--   Wickham H, Pedersen T, Seidel D (2023). *scales: Scale Functions for Visualization*. R package version 1.3.0, <https://CRAN.R-project.org/package=scales>.
--   Wickham H, Vaughan D, Girlich M (2024). *tidyr: Tidy Messy Data*. R package version 1.3.1, <https://CRAN.R-project.org/package=tidyr>.
-
-# System and Package Versions (Spatial Analyses)
-
-Analyses were conducted using the R Statistical language (version 4.4.2; R Core Team, 2024) on macOS Sequoia 15.6, using the packages geomorph (version 4.0.10; Baken E et al., 2021), data.table (version 1.17.0; Barrett T et al., 2025), Matrix (version 1.7.1; Bates D et al., 2024), maps (version 3.4.2.1; Becker OScbRA et al., 2024), future (version 1.34.0; Bengtsson H, 2021), future.apply (version 1.11.3; Bengtsson H, 2021), progressr (version 0.15.1; Bengtsson H, 2024), spatialreg (version 1.3.6; Bivand R et al., 2021), spData (version 2.3.3; Bivand R et al., 2024), spdep (version 1.3.8; Bivand R, Wong D, 2018), rgbif (version 3.8.1.2; Chamberlain S et al., 2025), mvMORPH (version 1.2.1; Clavel J et al., 2015), igraph (version 2.1.1; Csardi G, Nepusz T, 2006), viridisLite (version 0.4.2; Garnier et al., 2023), viridis (version 0.6.5; Garnier et al., 2024), tidyterra (version 0.6.1; Hernangómez D, 2023), terra (version 1.8.54; Hijmans R, 2025), stargazer (version 5.2.3; Hlavac M, 2022), subplex (version 1.9; King AA, Rowan T, 2024), pbmcapply (version 1.5.1; Kuang K et al., 2022), h3 (version 3.7.2; Kuethe S, 2022), RRPP (version 2.1.2; Collyer Adams, 2024), report (version 0.6.1; Makowski D et al., 2023), rnaturalearth (version 1.0.1; Massicotte P, South A, 2023), rgl (version 1.3.12; Murdoch D, Adler D, 2024), h3jsr (version 1.3.1; O'Brien L, 2023), ape (version 5.8; Paradis E, Schliep K, 2019), lwgeom (version 0.2.14; Pebesma E, 2024), sf (version 1.0.21; Pebesma E, Bivand R, 2023), patchwork (version 1.3.0.9000; Pedersen T, 2024), phytools (version 2.3.0; Revell L, 2024), corpcor (version 1.6.10; Schafer J et al., 2021), pbapply (version 1.7.2; Solymos P, Zawadzki Z, 2023), rnaturalearthdata (version 1.0.0; South A et al., 2024), MASS (version 7.3.61; Venables WN, Ripley BD, 2002), ggplot2 (version 3.5.1; Wickham H, 2016), stringr (version 1.5.1; Wickham H, 2023), dplyr (version 1.1.4; Wickham H et al., 2023) and scales (version 1.3.0; Wickham H et al., 2023).
-
-## References
-
--   Baken E, Collyer M, Kaliontzopoulou A, Adams D (2021). “geomorph v4.0 and gmShiny: enhanced analytics and a new graphical interface for a comprehensive morphometric experience.” *Methods in Ecology and Evolution*, *12*, 2355-2363. Adams D, Collyer M, Kaliontzopoulou A, Baken E (2025). “Geomorph: Software for geometric morphometric analyses. R package version 4.0.10.” <https://cran.r-project.org/package=geomorph>. Collyer M, Adams D (2024). “RRPP: Linear Model Evaluation with Randomized Residuals in a Permutation Procedure, R package version 2.0.4.” <https://cran.r-project.org/package=RRPP>. Collyer M, Adams D (2018). “RRPP: An R package for fitting linear models to high‐dimensional data using residual randomization.”
--   Barrett T, Dowle M, Srinivasan A, Gorecki J, Chirico M, Hocking T, Schwendinger B, Krylov I (2025). *data.table: Extension of `data.frame`*. R package version 1.17.0, <https://CRAN.R-project.org/package=data.table>.
--   Bates D, Maechler M, Jagan M (2024). *Matrix: Sparse and Dense Matrix Classes and Methods*. R package version 1.7-1, <https://CRAN.R-project.org/package=Matrix>.
--   Becker OScbRA, Minka ARWRvbRBEbTP, Deckmyn. A (2024). *maps: Draw Geographical Maps*. R package version 3.4.2.1, <https://CRAN.R-project.org/package=maps>.
--   Bengtsson H (2021). “A Unifying Framework for Parallel and Distributed Processing in R using Futures.” *The R Journal*, *13*(2), 208-227. <doi:10.32614/RJ-2021-048> <https://doi.org/10.32614/RJ-2021-048>, <https://doi.org/10.32614/RJ-2021-048>.
--   Bengtsson H (2021). “A Unifying Framework for Parallel and Distributed Processing in R using Futures.” *The R Journal*, *13*(2), 208-227. <doi:10.32614/RJ-2021-048> <https://doi.org/10.32614/RJ-2021-048>, <https://doi.org/10.32614/RJ-2021-048>.
--   Bengtsson H (2024). *progressr: An Inclusive, Unifying API for Progress Updates*. R package version 0.15.1, <https://CRAN.R-project.org/package=progressr>.
--   Bivand R, Millo G, Piras G (2021). “A Review of Software for Spatial Econometrics in R.” *Mathematics*, *9*(11). <doi:10.3390/math9111276> <https://doi.org/10.3390/math9111276>, <https://www.mdpi.com/2227-7390/9/11/1276>. Bivand R, Piras G (2015). “Comparing Implementations of Estimation Methods for Spatial Econometrics.” *Journal of Statistical Software*, *63*(18), 1-36. <doi:10.18637/jss.v063.i18> <https://doi.org/10.18637/jss.v063.i18>. Bivand R, Hauke J, Kossowski T (2013). “Computing the Jacobian in Gaussian spatial autoregressive models: An illustrated comparison of available methods.” *Geographical Analysis*, *45*(2), 150-179. <doi:10.1111/gean.12008> <https://doi.org/10.1111/gean.12008>. Bivand R, Pebesma E, Gómez-Rubio V (2013). *Applied spatial data analysis with R, Second edition*. Springer, NY. <https://asdar-book.org/>. Pebesma E, Bivand R (2023). *Spatial Data Science With Applications in R*. Chapman & Hall. <https://r-spatial.org/book/>.
--   Bivand R, Nowosad J, Lovelace R (2024). *spData: Datasets for Spatial Analysis*. R package version 2.3.3, <https://CRAN.R-project.org/package=spData>.
--   Bivand R, Wong D (2018). “Comparing implementations of global and local indicators of spatial association.” *TEST*, *27*(3), 716-748. <doi:10.1007/s11749-018-0599-x> <https://doi.org/10.1007/s11749-018-0599-x>. Roger Bivand (2022). “R Packages for Analyzing Spatial Data: A Comparative Case Study with Areal Data.” *Geographical Analysis*, *54*(3), 488-518. <doi:10.1111/gean.12319> <https://doi.org/10.1111/gean.12319>. Bivand R, Pebesma E, Gómez-Rubio V (2013). *Applied spatial data analysis with R, Second edition*. Springer, NY. <https://asdar-book.org/>. Pebesma E, Bivand R (2023). *Spatial Data Science With Applications in R*. Chapman & Hall. <https://r-spatial.org/book/>.
--   Chamberlain S, Barve V, Mcglinn D, Oldoni D, Desmet P, Geffert L, Ram K (2025). *rgbif: Interface to the Global Biodiversity Information Facility API*. R package version 3.8.1.2, <https://CRAN.R-project.org/package=rgbif>. Chamberlain S, Boettiger C (2017). “R Python, and Ruby clients for GBIF species occurrence data.” *PeerJ PrePrints*. <https://doi.org/10.7287/peerj.preprints.3304v1>.
--   Clavel J, Escarguel G, Merceron G (2015). “mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data.” *Methods in Ecology and Evolution*, *6*, 1311-1319.
--   Csardi G, Nepusz T (2006). “The igraph software package for complex network research.” *InterJournal*, *Complex Systems*, 1695. <https://igraph.org>. Csárdi G, Nepusz T, Traag V, Horvát S, Zanini F, Noom D, Müller K (2025). *igraph: Network Analysis and Visualization in R*. <doi:10.5281/zenodo.7682609> <https://doi.org/10.5281/zenodo.7682609>, R package version 2.1.1, <https://CRAN.R-project.org/package=igraph>.
--   Garnier, Simon, Ross, Noam, Rudis, Robert, Camargo, Pedro A, Sciaini, Marco, Scherer, Cédric (2023). *viridis(Lite) - Colorblind-Friendly Color Maps for R*. <doi:10.5281/zenodo.4678327> <https://doi.org/10.5281/zenodo.4678327>, viridisLite package version 0.4.2, <https://sjmgarnier.github.io/viridis/>.
--   Garnier, Simon, Ross, Noam, Rudis, Robert, Camargo, Pedro A, Sciaini, Marco, Scherer, Cédric (2024). *viridis(Lite) - Colorblind-Friendly Color Maps for R*. <doi:10.5281/zenodo.4679423> <https://doi.org/10.5281/zenodo.4679423>, viridis package version 0.6.5, <https://sjmgarnier.github.io/viridis/>.
--   Hernangómez D (2023). “Using the tidyverse with terra objects: the tidyterra package.” *Journal of Open Source Software*, *8*(91), 5751. ISSN 2475-9066, <doi:10.21105/joss.05751> <https://doi.org/10.21105/joss.05751>, <https://doi.org/10.21105/joss.05751>.
--   Hijmans R (2025). *terra: Spatial Data Analysis*. R package version 1.8-54, <https://CRAN.R-project.org/package=terra>.
--   Hlavac M (2022). *stargazer: Well-Formatted Regression and Summary Statistics Tables*. Social Policy Institute, Bratislava, Slovakia. R package version 5.2.3, <https://CRAN.R-project.org/package=stargazer>.
--   King AA, Rowan T (2024). *subplex: Unconstrained Optimization using the Subplex Algorithm*. R package version 1.9, <https://CRAN.R-project.org/package=subplex>.
--   Kuang K, Kong Q, Napolitano F (2022). \_pbmcapply: Tracking the Progress of Mc\*pply with Progress Bar\_. R package version 1.5.1, <https://CRAN.R-project.org/package=pbmcapply>.
--   Kuethe S (2022). *h3: R Bindings for H3*. R package version 3.7.2, commit 6b658e832f6907581d9d5c5296d611c4e4cf372a, <https://github.com/crazycapivara/h3-r>.
--   M. L. Collyer D. C. Adams (2024). *RRPP: Linear Model Evaluation with Randomized Residuals in a Permutation Procedure. R package version 2.1.2.*. <https://CRAN.R-project.org/package=RRPP>. M. L. Collyer D. C. Adams (2018). “RRPP: An R package for fitting linear models to high‐dimensional data using residual randomization.” *Methods in Ecology and Evolution*, *9*, 1772-1779. <https://doi.org/10.1111/2041-210X.13029>.
--   Makowski D, Lüdecke D, Patil I, Thériault R, Ben-Shachar M, Wiernik B (2023). “Automated Results Reporting as a Practical Tool to Improve Reproducibility and Methodological Best Practices Adoption.” *CRAN*. <https://easystats.github.io/report/>.
--   Massicotte P, South A (2023). *rnaturalearth: World Map Data from Natural Earth*. R package version 1.0.1, <https://CRAN.R-project.org/package=rnaturalearth>.
--   Murdoch D, Adler D (2024). *rgl: 3D Visualization Using OpenGL*. R package version 1.3.12, <https://CRAN.R-project.org/package=rgl>.
--   O'Brien L (2023). *h3jsr: Access Uber's H3 Library*. R package version 1.3.1, <https://CRAN.R-project.org/package=h3jsr>.
--   Paradis E, Schliep K (2019). “ape 5.0: an environment for modern phylogenetics and evolutionary analyses in R.” *Bioinformatics*, *35*, 526-528. <doi:10.1093/bioinformatics/bty633> <https://doi.org/10.1093/bioinformatics/bty633>.
--   Pebesma E (2024). *lwgeom: Bindings to Selected 'liblwgeom' Functions for Simple Features*. R package version 0.2-14, <https://CRAN.R-project.org/package=lwgeom>.
--   Pebesma E, Bivand R (2023). *Spatial Data Science: With applications in R*. Chapman and Hall/CRC. <doi:10.1201/9780429459016> <https://doi.org/10.1201/9780429459016>, <https://r-spatial.org/book/>. Pebesma E (2018). “Simple Features for R: Standardized Support for Spatial Vector Data.” *The R Journal*, *10*(1), 439-446. <doi:10.32614/RJ-2018-009> <https://doi.org/10.32614/RJ-2018-009>, <https://doi.org/10.32614/RJ-2018-009>.
--   Pedersen T (2024). *patchwork: The Composer of Plots*. R package version 1.3.0.9000, commit 2695a9f0200b7fd73f295d5c8a3e13e3943078c5, <https://github.com/thomasp85/patchwork>.
--   R Core Team (2024). *R: A Language and Environment for Statistical Computing*. R Foundation for Statistical Computing, Vienna, Austria. <https://www.R-project.org/>.
--   Revell L (2024). “phytools 2.0: an updated R ecosystem for phylogenetic comparative methods (and other things).” *PeerJ*, *12*, e16505. <doi:10.7717/peerj.16505> <https://doi.org/10.7717/peerj.16505>.
--   Schafer J, Opgen-Rhein R, Zuber V, Ahdesmaki M, Silva APD, Strimmer. K (2021). *corpcor: Efficient Estimation of Covariance and (Partial) Correlation*. R package version 1.6.10, <https://CRAN.R-project.org/package=corpcor>.
--   Solymos P, Zawadzki Z (2023). \_pbapply: Adding Progress Bar to '\*apply' Functions\_. R package version 1.7-2, <https://CRAN.R-project.org/package=pbapply>.
--   South A, Michael S, Massicotte P (2024). *rnaturalearthdata: World Vector Map Data from Natural Earth Used in 'rnaturalearth'*. R package version 1.0.0, <https://CRAN.R-project.org/package=rnaturalearthdata>.
--   Venables WN, Ripley BD (2002). *Modern Applied Statistics with S*, Fourth edition. Springer, New York. ISBN 0-387-95457-0, <https://www.stats.ox.ac.uk/pub/MASS4/>.
--   Wickham H (2016). *ggplot2: Elegant Graphics for Data Analysis*. Springer-Verlag New York. ISBN 978-3-319-24277-4, <https://ggplot2.tidyverse.org>.
--   Wickham H (2023). *stringr: Simple, Consistent Wrappers for Common String Operations*. R package version 1.5.1, <https://CRAN.R-project.org/package=stringr>.
--   Wickham H, François R, Henry L, Müller K, Vaughan D (2023). *dplyr: A Grammar of Data Manipulation*. R package version 1.1.4, <https://CRAN.R-project.org/package=dplyr>.
--   Wickham H, Pedersen T, Seidel D (2023). *scales: Scale Functions for Visualization*. R package version 1.3.0, <https://CRAN.R-project.org/package=scales>. \>
 
 ## License
 
@@ -321,4 +275,3 @@ Analyses were conducted using the R Statistical language (version 4.4.2; R Core 
 > This repository primarily serves as an archival record of the analyses used in this study.  
 > Users interested in running these methods on their own datasets should use the **bifrost** R package, which provides a supported and generalizable implementation of the analysis pipeline and is detailed in other work:
 > [CRAN](https://cran.r-project.org/package=bifrost) · [GitHub](https://github.com/jakeberv/bifrost)
-

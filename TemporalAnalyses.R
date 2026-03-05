@@ -25,7 +25,12 @@ library(evd)
 library(fitdistrplus)
 library(HDInterval)
 
-setwd('/Users/cotinga/jacob.berv@gmail.com/Code/passerine-bodyplan-evolution')
+if (!dir.exists("data")) {
+  stop(
+    "Expected 'data/' in the working directory. Run this script from the repo root.",
+    call. = FALSE
+  )
+}
 
 #read in function definitions
 source("TemporalAnalyses-functions.R")
@@ -51,9 +56,9 @@ source("TemporalAnalyses-functions.R")
 #IC 40
 {
   ### read in various datasets
-  supertree <- read.tree(file='/Users/cotinga/jacob.berv@gmail.com/Code/skelevision_analysis/ythlida_supertree.rescale.tre')
-  dat.mvgls <- readRDS(file='/Users/cotinga/jacob.berv@gmail.com/Code/skelevision_analysis/dat.mvgls.RDS')
-  sampled_cv <- readRDS(file= '/Users/cotinga/jacob.berv@gmail.com/Code/skelevision_analysis/sampled_cv.RDS')
+  supertree <- read.tree(file='data/temporal/01_core_inputs/external_skelevision/ythlida_supertree.rescale.tre')
+  dat.mvgls <- readRDS(file='data/temporal/01_core_inputs/external_skelevision/dat.mvgls.RDS')
+  sampled_cv <- readRDS(file= 'data/temporal/01_core_inputs/external_skelevision/sampled_cv.RDS')
   superdat.shuffle<-as.matrix(dat.mvgls[supertree$tip.label,]) #reorder the dataset
   #need to reorder the sampled_cv dataset
   rownames(sampled_cv) <- sampled_cv$phylo
@@ -82,8 +87,8 @@ source("TemporalAnalyses-functions.R")
   #     method='LL', 
   #     error=T
   #     )
-  # saveRDS(min30.ic40.gic, file='min30.ic40.gic.RDS')
-  min30.ic40.gic <- readRDS(file='new_bifrost/min30.ic40.gic.RDS')
+  # saveRDS(min30.ic40.gic, file='data/temporal/02_shift_search/new_bifrost/min30.ic40.gic.RDS')
+  min30.ic40.gic <- readRDS(file='data/temporal/02_shift_search/new_bifrost/min30.ic40.gic.RDS')
   min30.ic40.gic$model_fit_history$fits<-NULL #wipe out the history to save memory
   plot_ic_acceptance_matrix(matrix_data = min30.ic40.gic$model_fit_history$ic_acceptance_matrix)
   
@@ -109,8 +114,8 @@ source("TemporalAnalyses-functions.R")
   #     method='LL', 
   #     error=T
   #   )
-  # saveRDS(min30.ic40.bic, file='min30.ic40.bic.RDS')
-  min30.ic40.bic <- readRDS(file='new_bifrost/min30.ic40.bic.RDS')
+  # saveRDS(min30.ic40.bic, file='data/temporal/02_shift_search/new_bifrost/min30.ic40.bic.RDS')
+  min30.ic40.bic <- readRDS(file='data/temporal/02_shift_search/new_bifrost/min30.ic40.bic.RDS')
   min30.ic40.bic$model_fit_history$fits<-NULL #wipe out the history to save memory
   plot_ic_acceptance_matrix(matrix_data = min30.ic40.bic$model_fit_history$ic_acceptance_matrix)
   
@@ -136,8 +141,8 @@ source("TemporalAnalyses-functions.R")
   #     method='LL', 
   #     error=T
   #   )
-  # saveRDS(min20.ic40.gic, file='min20.ic40.gic.RDS')
-  min20.ic40.gic<-readRDS(file='new_bifrost/min20.ic40.gic.RDS')
+  # saveRDS(min20.ic40.gic, file='data/temporal/02_shift_search/new_bifrost/min20.ic40.gic.RDS')
+  min20.ic40.gic<-readRDS(file='data/temporal/02_shift_search/new_bifrost/min20.ic40.gic.RDS')
   min20.ic40.gic$model_fit_history$fits<-NULL #wipe out the history to save memory
   plot_ic_acceptance_matrix(matrix_data = min20.ic40.gic$model_fit_history$ic_acceptance_matrix)
   #searchConvergentShifts(input_model_results = min10.ic40.bic, trait_data = superdat.shuffle, formula = 'trait_data[,c(-13)]~trait_data[,c(13)]', convergence_threshold = 1, IC = 'BIC', plot = T, model = "BMM", method='LL', error=T, REML=T, distance_metric = 'AverageVariance')
@@ -164,8 +169,8 @@ source("TemporalAnalyses-functions.R")
   #     method='LL', 
   #     error=T
   #   )
-  # saveRDS(min20.ic40.bic, file='min20.ic40.bic.RDS')
-  min20.ic40.bic<-readRDS(file='new_bifrost/min20.ic40.bic.RDS')
+  # saveRDS(min20.ic40.bic, file='data/temporal/02_shift_search/new_bifrost/min20.ic40.bic.RDS')
+  min20.ic40.bic<-readRDS(file='data/temporal/02_shift_search/new_bifrost/min20.ic40.bic.RDS')
   min20.ic40.bic$model_fit_history$fits<-NULL #wipe out the history to save memory
   plot_ic_acceptance_matrix(matrix_data = min20.ic40.bic$model_fit_history$ic_acceptance_matrix)
   
@@ -191,8 +196,8 @@ source("TemporalAnalyses-functions.R")
   #     method='LL', 
   #     error=T
   #   )
-  # saveRDS(min10.ic40.gic, file='min10.ic40.gic.RDS')
-  min10.ic40.gic <- readRDS(file='new_bifrost/min10.ic40.gic.RDS')
+  # saveRDS(min10.ic40.gic, file='data/temporal/02_shift_search/new_bifrost/min10.ic40.gic.RDS')
+  min10.ic40.gic <- readRDS(file='data/temporal/02_shift_search/new_bifrost/min10.ic40.gic.RDS')
   min10.ic40.gic$model_fit_history$fits<-NULL #wipe out the history to save memory
   plot_ic_acceptance_matrix(matrix_data = min10.ic40.gic$model_fit_history$ic_acceptance_matrix)
   
@@ -218,8 +223,8 @@ source("TemporalAnalyses-functions.R")
   #     method='LL', 
   #     error=T
   #   )
-  # saveRDS(min10.ic40.bic, file='min10.ic40.bic.RDS')
-  min10.ic40.bic <- readRDS(file='new_bifrost/min10.ic40.bic.RDS')
+  # saveRDS(min10.ic40.bic, file='data/temporal/02_shift_search/new_bifrost/min10.ic40.bic.RDS')
+  min10.ic40.bic <- readRDS(file='data/temporal/02_shift_search/new_bifrost/min10.ic40.bic.RDS')
   min10.ic40.bic$model_fit_history$fits<-NULL #wipe out the history to save memory
   plot_ic_acceptance_matrix(matrix_data = min10.ic40.bic$model_fit_history$ic_acceptance_matrix)
   
@@ -229,9 +234,9 @@ source("TemporalAnalyses-functions.R")
 #IC 20
 {
   ### read in various datasets
-  supertree <- read.tree(file='/Users/cotinga/jacob.berv@gmail.com/Code/skelevision_analysis/ythlida_supertree.rescale.tre')
-  dat.mvgls <- readRDS(file='/Users/cotinga/jacob.berv@gmail.com/Code/skelevision_analysis/dat.mvgls.RDS')
-  sampled_cv <- readRDS(file= '/Users/cotinga/jacob.berv@gmail.com/Code/skelevision_analysis/sampled_cv.RDS')
+  supertree <- read.tree(file='data/temporal/01_core_inputs/external_skelevision/ythlida_supertree.rescale.tre')
+  dat.mvgls <- readRDS(file='data/temporal/01_core_inputs/external_skelevision/dat.mvgls.RDS')
+  sampled_cv <- readRDS(file= 'data/temporal/01_core_inputs/external_skelevision/sampled_cv.RDS')
   superdat.shuffle<-as.matrix(dat.mvgls[supertree$tip.label,]) #reorder the dataset
   #need to reorder the sampled_cv dataset
   rownames(sampled_cv) <- sampled_cv$phylo
@@ -260,8 +265,8 @@ source("TemporalAnalyses-functions.R")
   #     method='LL', 
   #     error=T
   #   )
-  # saveRDS(min30.ic20.gic, file='min30.ic20.gic.RDS')
-  min30.ic20.gic <- readRDS(file='new_bifrost/min30.ic20.gic.RDS')
+  # saveRDS(min30.ic20.gic, file='data/temporal/02_shift_search/new_bifrost/min30.ic20.gic.RDS')
+  min30.ic20.gic <- readRDS(file='data/temporal/02_shift_search/new_bifrost/min30.ic20.gic.RDS')
   min30.ic20.gic$model_fit_history$fits<-NULL #wipe out the history to save memory
   plot_ic_acceptance_matrix(matrix_data = min30.ic20.gic$model_fit_history$ic_acceptance_matrix)
   
@@ -287,8 +292,8 @@ source("TemporalAnalyses-functions.R")
   #     method='LL', 
   #     error=T
   #   )
-  # saveRDS(min30.ic20.bic, file='min30.ic20.bic.RDS')
-  min30.ic20.bic <- readRDS(file='new_bifrost/min30.ic20.bic.RDS')
+  # saveRDS(min30.ic20.bic, file='data/temporal/02_shift_search/new_bifrost/min30.ic20.bic.RDS')
+  min30.ic20.bic <- readRDS(file='data/temporal/02_shift_search/new_bifrost/min30.ic20.bic.RDS')
   min30.ic20.bic$model_fit_history$fits<-NULL #wipe out the history to save memory
   plot_ic_acceptance_matrix(matrix_data = min30.ic20.bic$model_fit_history$ic_acceptance_matrix)
   
@@ -314,8 +319,8 @@ source("TemporalAnalyses-functions.R")
   #     method='LL', 
   #     error=T
   #   )
-  # saveRDS(min20.ic20.gic, file='min20.ic20.gic.RDS')
-  min20.ic20.gic<-readRDS(file='new_bifrost/min20.ic20.gic.RDS')
+  # saveRDS(min20.ic20.gic, file='data/temporal/02_shift_search/new_bifrost/min20.ic20.gic.RDS')
+  min20.ic20.gic<-readRDS(file='data/temporal/02_shift_search/new_bifrost/min20.ic20.gic.RDS')
   min20.ic20.gic$model_fit_history$fits<-NULL #wipe out the history to save memory
   plot_ic_acceptance_matrix(matrix_data = min20.ic20.gic$model_fit_history$ic_acceptance_matrix)
   #searchConvergentShifts(input_model_results = min10.ic20.bic, trait_data = superdat.shuffle, formula = 'trait_data[,c(-13)]~trait_data[,c(13)]', convergence_threshold = 1, IC = 'BIC', plot = T, model = "BMM", method='LL', error=T, REML=T, distance_metric = 'AverageVariance')
@@ -342,8 +347,8 @@ source("TemporalAnalyses-functions.R")
   #     method='LL', 
   #     error=T
   #   )
-  # saveRDS(min20.ic20.bic, file='min20.ic20.bic.RDS')
-  min20.ic20.bic<-readRDS(file='new_bifrost/min20.ic20.bic.RDS')
+  # saveRDS(min20.ic20.bic, file='data/temporal/02_shift_search/new_bifrost/min20.ic20.bic.RDS')
+  min20.ic20.bic<-readRDS(file='data/temporal/02_shift_search/new_bifrost/min20.ic20.bic.RDS')
   min20.ic20.bic$model_fit_history$fits<-NULL #wipe out the history to save memory
   plot_ic_acceptance_matrix(matrix_data = min20.ic20.bic$model_fit_history$ic_acceptance_matrix)
   
@@ -369,8 +374,8 @@ source("TemporalAnalyses-functions.R")
   #     method='LL', 
   #     error=T
   #   )
-  # saveRDS(min10.ic20.gic, file='min10.ic20.gic.RDS')
-  min10.ic20.gic <- readRDS(file='new_bifrost/min10.ic20.gic.RDS')
+  # saveRDS(min10.ic20.gic, file='data/temporal/02_shift_search/new_bifrost/min10.ic20.gic.RDS')
+  min10.ic20.gic <- readRDS(file='data/temporal/02_shift_search/new_bifrost/min10.ic20.gic.RDS')
   min10.ic20.gic$model_fit_history$fits<-NULL #wipe out the history to save memory
   plot_ic_acceptance_matrix(matrix_data = min10.ic20.gic$model_fit_history$ic_acceptance_matrix)
   
@@ -396,8 +401,8 @@ source("TemporalAnalyses-functions.R")
   #     method='LL', 
   #     error=T
   #   )
-  # saveRDS(min10.ic20.bic, file='min10.ic20.bic.RDS')
-  min10.ic20.bic <- readRDS(file='new_bifrost/min10.ic20.bic.RDS')
+  # saveRDS(min10.ic20.bic, file='data/temporal/02_shift_search/new_bifrost/min10.ic20.bic.RDS')
+  min10.ic20.bic <- readRDS(file='data/temporal/02_shift_search/new_bifrost/min10.ic20.bic.RDS')
   min10.ic20.bic$model_fit_history$fits<-NULL #wipe out the history to save memory
   plot_ic_acceptance_matrix(matrix_data = min10.ic20.bic$model_fit_history$ic_acceptance_matrix)
   
@@ -488,8 +493,8 @@ global.model.mvBM<-mvgls(
       #   ),
       #   seed = 5
       # )
-      # saveRDS(simresults_100tip_10D_GIC2, file="simresults_100tip_10D_GIC2.RDS")
-      simresults_100tip_10D_GIC2 <- readRDS(file = "simresults_100tip_10D_GIC2.RDS")
+      # saveRDS(simresults_100tip_10D_GIC2, file="data/temporal/03_simulations/simresults_100tip_10D_GIC2.RDS")
+      simresults_100tip_10D_GIC2 <- readRDS(file = "data/temporal/03_simulations/simresults_100tip_10D_GIC2.RDS")
       
       #what is the FP rate?
       FP_list.1.gic<-list()
@@ -538,8 +543,8 @@ global.model.mvBM<-mvgls(
       #   ),
       #   seed = 5
       # )
-      # saveRDS(simresults_100tip_10D_GIC10, file="simresults_100tip_10D_GIC10.RDS")
-      simresults_100tip_10D_GIC10<- readRDS(file="simresults_100tip_10D_GIC10.RDS")
+      # saveRDS(simresults_100tip_10D_GIC10, file="data/temporal/03_simulations/simresults_100tip_10D_GIC10.RDS")
+      simresults_100tip_10D_GIC10<- readRDS(file="data/temporal/03_simulations/simresults_100tip_10D_GIC10.RDS")
       
       #what is the FP rate?
       FP_list.2.gic<-list()
@@ -591,8 +596,8 @@ global.model.mvBM<-mvgls(
     #   ),
     #   seed = 5
     # )
-    # saveRDS(simresults_200tip_10D_GIC2, file="simresults_200tip_10D_GIC2.RDS")
-    simresults_200tip_10D_GIC2 <- readRDS(file="simresults_200tip_10D_GIC2.RDS")
+    # saveRDS(simresults_200tip_10D_GIC2, file="data/temporal/03_simulations/simresults_200tip_10D_GIC2.RDS")
+    simresults_200tip_10D_GIC2 <- readRDS(file="data/temporal/03_simulations/simresults_200tip_10D_GIC2.RDS")
     
     #what is the FP rate?
     FP_list.3.gic<-list()
@@ -638,8 +643,8 @@ global.model.mvBM<-mvgls(
     #   ),
     #   seed = 5
     # )
-    # saveRDS(simresults_200tip_10D_GIC10, file='simresults_200tip_10D_GIC10.RDS')
-    simresults_200tip_10D_GIC10<-readRDS(file='simresults_200tip_10D_GIC10.RDS')
+    # saveRDS(simresults_200tip_10D_GIC10, file='data/temporal/03_simulations/simresults_200tip_10D_GIC10.RDS')
+    simresults_200tip_10D_GIC10<-readRDS(file='data/temporal/03_simulations/simresults_200tip_10D_GIC10.RDS')
     
     #what is the FP rate?
     FP_list.4.gic<-list()
@@ -689,8 +694,8 @@ global.model.mvBM<-mvgls(
     #   ),
     #   seed = 5
     # )
-    # saveRDS(simresults_300tip_10D_GIC2, file="simresults_300tip_10D_GIC2.RDS")
-    simresults_300tip_10D_GIC2<-readRDS('simresults_300tip_10D_GIC2.RDS')
+    # saveRDS(simresults_300tip_10D_GIC2, file="data/temporal/03_simulations/simresults_300tip_10D_GIC2.RDS")
+    simresults_300tip_10D_GIC2<-readRDS('data/temporal/03_simulations/simresults_300tip_10D_GIC2.RDS')
     
     #what is the FP rate?
     FP_list.5.gic<-list()
@@ -736,8 +741,8 @@ global.model.mvBM<-mvgls(
     #   ),
     #   seed = 5
     # )
-    # saveRDS(simresults_300tip_10D_GIC10, file="simresults_300tip_10D_GIC10.RDS")
-    simresults_300tip_10D_GIC10 <- readRDS(file="simresults_300tip_10D_GIC10.RDS")
+    # saveRDS(simresults_300tip_10D_GIC10, file="data/temporal/03_simulations/simresults_300tip_10D_GIC10.RDS")
+    simresults_300tip_10D_GIC10 <- readRDS(file="data/temporal/03_simulations/simresults_300tip_10D_GIC10.RDS")
     
     #what is the FP rate?
     FP_list.6.gic<-list()
@@ -802,8 +807,8 @@ global.model.mvBM<-mvgls(
         ),
         seed = 5
       )
-      saveRDS(simresults_100tip_10D_BIC2, file="simresults_100tip_10D_BIC2.RDS")
-      simresults_100tip_10D_BIC2 <- readRDS("simresults_100tip_10D_BIC2.RDS")
+      saveRDS(simresults_100tip_10D_BIC2, file="data/temporal/03_simulations/simresults_100tip_10D_BIC2.RDS")
+      simresults_100tip_10D_BIC2 <- readRDS("data/temporal/03_simulations/simresults_100tip_10D_BIC2.RDS")
       
       #what is the FP rate?
       FP_list.1.bic<-list()
@@ -852,8 +857,8 @@ global.model.mvBM<-mvgls(
         ),
         seed = 5
       )
-      saveRDS(simresults_100tip_10D_BIC10, file="simresults_100tip_10D_BIC10.RDS")
-      simresults_100tip_10D_BIC10<- readRDS(file='simresults_100tip_10D_BIC10.RDS')
+      saveRDS(simresults_100tip_10D_BIC10, file="data/temporal/03_simulations/simresults_100tip_10D_BIC10.RDS")
+      simresults_100tip_10D_BIC10<- readRDS(file='data/temporal/03_simulations/simresults_100tip_10D_BIC10.RDS')
       
       #what is the FP rate?
       FP_list.2.bic<-list()
@@ -905,8 +910,8 @@ global.model.mvBM<-mvgls(
       ),
       seed = 5
     )
-    saveRDS(simresults_200tip_10D_BIC2, file="simresults_200tip_10D_BIC2.RDS")
-    simresults_200tip_10D_BIC2 <- readRDS("simresults_200tip_10D_BIC2.RDS")
+    saveRDS(simresults_200tip_10D_BIC2, file="data/temporal/03_simulations/simresults_200tip_10D_BIC2.RDS")
+    simresults_200tip_10D_BIC2 <- readRDS("data/temporal/03_simulations/simresults_200tip_10D_BIC2.RDS")
     
     #what is the FP rate?
     FP_list.3.bic<-list()
@@ -952,8 +957,8 @@ global.model.mvBM<-mvgls(
       ),
       seed = 5
     )
-    saveRDS(simresults_200tip_10D_BIC10, file='simresults_200tip_10D_BIC10.RDS')
-    simresults_200tip_10D_BIC10<-readRDS(file='simresults_200tip_10D_BIC10.RDS')
+    saveRDS(simresults_200tip_10D_BIC10, file='data/temporal/03_simulations/simresults_200tip_10D_BIC10.RDS')
+    simresults_200tip_10D_BIC10<-readRDS(file='data/temporal/03_simulations/simresults_200tip_10D_BIC10.RDS')
     
     #what is the FP rate?
     FP_list.4.bic<-list()
@@ -1003,8 +1008,8 @@ global.model.mvBM<-mvgls(
       ),
       seed = 5
     )
-    saveRDS(simresults_300tip_10D_BIC2, file="simresults_300tip_10D_BIC2.RDS")
-    simresults_300tip_10D_BIC2<-readRDS(file='simresults_300tip_10D_BIC2.RDS')
+    saveRDS(simresults_300tip_10D_BIC2, file="data/temporal/03_simulations/simresults_300tip_10D_BIC2.RDS")
+    simresults_300tip_10D_BIC2<-readRDS(file='data/temporal/03_simulations/simresults_300tip_10D_BIC2.RDS')
     
     #what is the FP rate?
     FP_list.5.bic<-list()
@@ -1050,8 +1055,8 @@ global.model.mvBM<-mvgls(
       ),
       seed = 5
     )
-    saveRDS(simresults_300tip_10D_BIC10, file="simresults_300tip_10D_BIC10.RDS")
-    simresults_300tip_10D_BIC10 <- readRDS(file='simresults_300tip_10D_BIC10.RDS')
+    saveRDS(simresults_300tip_10D_BIC10, file="data/temporal/03_simulations/simresults_300tip_10D_BIC10.RDS")
+    simresults_300tip_10D_BIC10 <- readRDS(file='data/temporal/03_simulations/simresults_300tip_10D_BIC10.RDS')
     
     #what is the FP rate?
     FP_list.6.bic<-list()
@@ -1205,8 +1210,8 @@ global.model.mvBM<-mvgls(
       #     method                     = "LL"
       #   )
       # )
-      # saveRDS(output_FN.1.gic, file='output_FN.1.gic.RDS')
-      output_FN.1.gic <- readRDS('output_FN.1.gic.RDS')
+      # saveRDS(output_FN.1.gic, file='data/temporal/04_false_negative_outputs/output_FN.1.gic.RDS')
+      output_FN.1.gic <- readRDS('data/temporal/04_false_negative_outputs/output_FN.1.gic.RDS')
       
       metrics.output_FN.1.gic <- evaluate_shift_recovery(
         simdata    = output_FN.1.gic$simdata,
@@ -1260,8 +1265,8 @@ global.model.mvBM<-mvgls(
       #     method                     = "LL"
       #   )
       # )
-      # saveRDS(output_FN.2.bic, file='output_FN.2.bic.RDS')
-      output_FN.2.bic<-readRDS(file='output_FN.2.bic.RDS')
+      # saveRDS(output_FN.2.bic, file='data/temporal/04_false_negative_outputs/output_FN.2.bic.RDS')
+      output_FN.2.bic<-readRDS(file='data/temporal/04_false_negative_outputs/output_FN.2.bic.RDS')
       
       metrics.output_FN.2.bic <- evaluate_shift_recovery(
         simdata    = output_FN.2.bic$simdata,
@@ -1320,8 +1325,8 @@ global.model.mvBM<-mvgls(
       #     method                     = "LL"
       #   )
       # )
-      # saveRDS(output_FN.3.gic, file='output_FN.3.gic.RDS')
-      output_FN.3.gic <- readRDS(file='output_FN.3.gic.RDS')
+      # saveRDS(output_FN.3.gic, file='data/temporal/04_false_negative_outputs/output_FN.3.gic.RDS')
+      output_FN.3.gic <- readRDS(file='data/temporal/04_false_negative_outputs/output_FN.3.gic.RDS')
       
       metrics.output_FN.3.gic <- evaluate_shift_recovery(
         simdata    = output_FN.3.gic$simdata,
@@ -1375,8 +1380,8 @@ global.model.mvBM<-mvgls(
       #     method                     = "LL"
       #   )
       # )
-      # saveRDS(output_FN.4.bic, file='output_FN.4.bic.RDS')
-      output_FN.4.bic <- readRDS(file='output_FN.4.bic.RDS')
+      # saveRDS(output_FN.4.bic, file='data/temporal/04_false_negative_outputs/output_FN.4.bic.RDS')
+      output_FN.4.bic <- readRDS(file='data/temporal/04_false_negative_outputs/output_FN.4.bic.RDS')
       
       metrics.output_FN.4.bic <- evaluate_shift_recovery(
         simdata    = output_FN.4.bic$simdata,
@@ -1450,8 +1455,8 @@ global.model.mvBM<-mvgls(
       #     method                     = "LL"
       #   )
       # )
-      # saveRDS(output_FN.1.gic.corr, file='output_FN.1.gic.corr.RDS')
-      output_FN.1.gic.corr<-readRDS(file='output_FN.1.gic.corr.RDS')
+      # saveRDS(output_FN.1.gic.corr, file='data/temporal/04_false_negative_outputs/output_FN.1.gic.corr.RDS')
+      output_FN.1.gic.corr<-readRDS(file='data/temporal/04_false_negative_outputs/output_FN.1.gic.corr.RDS')
       
       metrics.output_FN.1.gic.corr <- evaluate_shift_recovery(
         simdata    = output_FN.1.gic.corr$simdata,
@@ -1507,8 +1512,8 @@ global.model.mvBM<-mvgls(
       #     method                     = "LL"
       #   )
       # )
-      # saveRDS(output_FN.2.bic.corr, file='output_FN.2.bic.corr.RDS')
-      output_FN.2.bic.corr<-readRDS(file='output_FN.2.bic.corr.RDS')
+      # saveRDS(output_FN.2.bic.corr, file='data/temporal/04_false_negative_outputs/output_FN.2.bic.corr.RDS')
+      output_FN.2.bic.corr<-readRDS(file='data/temporal/04_false_negative_outputs/output_FN.2.bic.corr.RDS')
       
       metrics.output_FN.2.bic.corr <- evaluate_shift_recovery(
         simdata    = output_FN.2.bic.corr$simdata,
@@ -1568,8 +1573,8 @@ global.model.mvBM<-mvgls(
       #     method                     = "LL"
       #   )
       # )
-      # saveRDS(output_FN.3.gic.corr, file='output_FN.3.gic.corr.RDS')
-      output_FN.3.gic.corr <- readRDS(file='output_FN.3.gic.corr.RDS')
+      # saveRDS(output_FN.3.gic.corr, file='data/temporal/04_false_negative_outputs/output_FN.3.gic.corr.RDS')
+      output_FN.3.gic.corr <- readRDS(file='data/temporal/04_false_negative_outputs/output_FN.3.gic.corr.RDS')
       
       metrics.output_FN.3.gic.corr <- evaluate_shift_recovery(
         simdata    = output_FN.3.gic.corr$simdata,
@@ -1624,8 +1629,8 @@ global.model.mvBM<-mvgls(
       #     method                     = "LL"
       #   )
       # )
-      # saveRDS(output_FN.4.bic.corr, file='output_FN.4.bic.corr.RDS')
-      output_FN.4.bic.corr <- readRDS(file='output_FN.4.bic.corr.RDS')
+      # saveRDS(output_FN.4.bic.corr, file='data/temporal/04_false_negative_outputs/output_FN.4.bic.corr.RDS')
+      output_FN.4.bic.corr <- readRDS(file='data/temporal/04_false_negative_outputs/output_FN.4.bic.corr.RDS')
       
       metrics.output_FN.4.bic.corr <- evaluate_shift_recovery(
         simdata    = output_FN.4.bic.corr$simdata,
@@ -2087,9 +2092,9 @@ dev.off()
 #westerhold data
 {
   
-  westerhold<-read_xlsx(path="/Users/cotinga/jacob.berv@gmail.com/Code/passerine-bodyplan-evolution/other_data/aba6853_tables_s8_s34.xlsx", skip = 1, sheet = 'Table S33')
+  westerhold<-read_xlsx(path="data/temporal/05_climate_reference/aba6853_tables_s8_s34.xlsx", skip = 1, sheet = 'Table S33')
   westerhold<-westerhold[complete.cases(westerhold$age_tuned), ]
-  westerhold.long<-read_xlsx(path="/Users/cotinga/jacob.berv@gmail.com/Code/passerine-bodyplan-evolution/other_data/aba6853_tables_s8_s34.xlsx", skip = 1, sheet = 'Table S34', trim_ws = TRUE)
+  westerhold.long<-read_xlsx(path="data/temporal/05_climate_reference/aba6853_tables_s8_s34.xlsx", skip = 1, sheet = 'Table S34', trim_ws = TRUE)
   westerhold.long<-westerhold.long[complete.cases(westerhold.long$age_tuned), ]
   
   #new plot Figure 2
@@ -2450,7 +2455,7 @@ waiting.times.temporal<-analyze_shift_waiting_times(min10.ic20.gic, verbose = T)
 waiting.times.lineage<-analyze_shift_waiting_times_by_branch(min10.ic20.gic, verbose = T)
 
 #add tipDR (as a control) using jon chang's code
-source('https://raw.githubusercontent.com/jonchang/fastdivrate/refs/heads/master/R/dr.R')
+source('https://raw.githubusercontent.com/jonchang/fastdivrate/ee8fcd0b7e623253d4d1225dadd10ffec966b8dc/R/dr.R')
 tipDR <- DR_statistic(min10.ic20.gic$tree_no_uncertainty_untransformed)
 
 sampled_cv_shift_metrics<-cbind(sampled_cv, Shift_Counts = Total_Shift_Counts, log_lineage_rate_branches = log_lineage_rate.branches, log_lineage_rate_shifts = log_lineage_rate.shifts, log_tip_rate = log_tip_rate.shifts, tipDR = tipDR) 
@@ -2467,8 +2472,8 @@ sampled_cv_shift_metrics<-sampled_cv_shift_metrics[
   ))),]
 
 #save the object to use for spatial analysis script
-saveRDS(sampled_cv_shift_metrics, file='sampled_cv_shift_metrics_8_08_25.RDS')
-sampled_cv_shift_metrics<-readRDS('sampled_cv_shift_metrics_8_08_25.RDS')
+saveRDS(sampled_cv_shift_metrics, file='data/spatial/04_temporal_bridge_inputs/sampled_cv_shift_metrics_8_08_25.RDS')
+sampled_cv_shift_metrics<-readRDS('data/spatial/04_temporal_bridge_inputs/sampled_cv_shift_metrics_8_08_25.RDS')
   
 #cor(log(shift_rate_metrics.branches$Tip_Phenotype_Rate), 
 #log(shift_rate_metrics.branches$Weighted_Phenotypic_Rate))
@@ -3621,5 +3626,3 @@ dev.off()
 
 
 }
-
-

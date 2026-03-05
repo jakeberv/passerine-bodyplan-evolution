@@ -33,7 +33,12 @@ library(stringr)
 library(stargazer)
 library(patchwork)
 
-setwd('/Users/cotinga/jacob.berv@gmail.com/Code/passerine-bodyplan-evolution')
+if (!dir.exists("data")) {
+  stop(
+    "Expected 'data/' in the working directory. Run this script from the repo root.",
+    call. = FALSE
+  )
+}
 
 #read in function definitions
 source("SpatialAnalyses-functions.R")
@@ -57,7 +62,7 @@ source("TemporalAnalyses-functions.R")
 
 
 # Step 1: Load the ranges dataset and prepare it
-load("/Users/cotinga/Downloads/ranges_4-16-22_multipolygons")
+load("data/spatial/00_raw_range_source/ranges_4-16-22_multipolygons")
 
 # Inspect the dataset
 class(ranges)
@@ -73,14 +78,14 @@ ranges$sci_name_underscored <- gsub(" ", "_", ranges$sci_name)
 # Assume sampled_cv is your existing dataset
 # Inspect the structure of sampled_cv
 
-sampled_cv_shift_metrics<-readRDS('sampled_cv_shift_metrics_8_08_25.RDS')
+sampled_cv_shift_metrics<-readRDS('data/spatial/04_temporal_bridge_inputs/sampled_cv_shift_metrics_8_08_25.RDS')
 sampled_cv<-sampled_cv_shift_metrics #adding due to data loading simplification
 #sum(sampled_cv_shift_metrics$phylo == sampled_cv$phylo)
 
 # Perform GBIF name matching for `sampled_cv$phylo`
 # gbif_matches <- name_backbone_checklist(sampled_cv$phylo)
-# saveRDS(gbif_matches, file='gbif_matches.RDS')
-gbif_matches <- readRDS('gbif_matches.RDS')
+# saveRDS(gbif_matches, file='data/spatial/01_taxonomy_matching/gbif_matches.RDS')
+gbif_matches <- readRDS('data/spatial/01_taxonomy_matching/gbif_matches.RDS')
 
 # Add the GBIF canonical names to the sampled_cv dataset
 sampled_cv$phylo_matched <- gbif_matches$canonicalName
@@ -130,7 +135,7 @@ print(head(name_mapping[name_mapping$original_name != name_mapping$suggested_nam
 # Step 5: Perform GBIF name matching for the updated suggested names
 # -------------------------------------------------------------------
 gbif_matches <- rgbif::name_backbone_checklist(name_mapping$suggested_name)
-#saveRDS(gbif_matches, file="updated_gbif_matches.RDS")
+#saveRDS(gbif_matches, file="data/spatial/01_taxonomy_matching/updated_gbif_matches.RDS")
 sum(is.na(gbif_matches$verbatim_name))
 length(unique(gbif_matches$speciesKey))
 }
@@ -141,8 +146,8 @@ length(unique(gbif_matches$speciesKey))
 # ------------------------------------------------------
 # Convert ranges$sci_name to character for GBIF matching
 # ranges_gbif_matches <- name_backbone_checklist(as.character(ranges$sci_name))
-# saveRDS(ranges_gbif_matches, file='ranges_gbif_matches.RDS')
-ranges_gbif_matches <- readRDS(file='ranges_gbif_matches.RDS')
+# saveRDS(ranges_gbif_matches, file='data/spatial/01_taxonomy_matching/ranges_gbif_matches.RDS')
+ranges_gbif_matches <- readRDS(file='data/spatial/01_taxonomy_matching/ranges_gbif_matches.RDS')
 
 table(ranges_gbif_matches$matchType)
 length(unique(ranges_gbif_matches$canonicalName))
@@ -197,10 +202,10 @@ resident_species.12 <- filtered_rows[filtered_rows$seasonal %in% c(1, 2), ]
   # passeriformes.filtered.merged.deduplicated.1 <- collapse_species_data_parallel(passeriformes.filtered.merged.1, workers=8, verbose=T)
   # passeriformes.filtered.merged.12 <- merge_species_shapes_planar_parallel(passeriformes.filtered.12, workers = 8)
   # passeriformes.filtered.merged.deduplicated.12 <- collapse_species_data_parallel(passeriformes.filtered.merged.12, workers=8, verbose=T)
-  #saveRDS(object = passeriformes.filtered.merged.deduplicated.1, file='passeriformes.filtered.merged.deduplicated.1.RDS')
-  #saveRDS(object = passeriformes.filtered.merged.deduplicated.12, file='passeriformes.filtered.merged.deduplicated.12.RDS')
-  passeriformes.filtered.merged.deduplicated.1 <- readRDS(file='passeriformes.filtered.merged.deduplicated.1.RDS')
-  passeriformes.filtered.merged.deduplicated.12 <- readRDS(file='passeriformes.filtered.merged.deduplicated.12.RDS')
+  #saveRDS(object = passeriformes.filtered.merged.deduplicated.1, file='data/spatial/02_ranges_and_filters/passeriformes.filtered.merged.deduplicated.1.RDS')
+  #saveRDS(object = passeriformes.filtered.merged.deduplicated.12, file='data/spatial/02_ranges_and_filters/passeriformes.filtered.merged.deduplicated.12.RDS')
+  passeriformes.filtered.merged.deduplicated.1 <- readRDS(file='data/spatial/02_ranges_and_filters/passeriformes.filtered.merged.deduplicated.1.RDS')
+  passeriformes.filtered.merged.deduplicated.12 <- readRDS(file='data/spatial/02_ranges_and_filters/passeriformes.filtered.merged.deduplicated.12.RDS')
 }
 
 #cleaning up memory usage
@@ -221,8 +226,8 @@ gc()
   #   function(geometry) assign_h3_approx(geometry, 3),
   #   future.seed = TRUE  # Ensures reproducible parallel-safe random numbers
   # )
-  # saveRDS(resident_species.1, file='resident_species1_filter_res3.RDS')
-  resident_species.1 <- readRDS(file='resident_species1_filter_res3.RDS')
+  # saveRDS(resident_species.1, file='data/spatial/02_ranges_and_filters/resident_species1_filter_res3.RDS')
+  resident_species.1 <- readRDS(file='data/spatial/02_ranges_and_filters/resident_species1_filter_res3.RDS')
   # Reset the parallel plan to sequential (optional cleanup step)
   #plan(sequential)
   
@@ -234,8 +239,8 @@ gc()
   #   function(geometry) assign_h3_approx(geometry, 3),
   #   future.seed = TRUE  # Ensures reproducible parallel-safe random numbers
   # )
-  # saveRDS(resident_species.12, file='resident_species12_filter_res3.RDS')
-  resident_species.12 <- readRDS(file='resident_species12_filter_res3.RDS')
+  # saveRDS(resident_species.12, file='data/spatial/02_ranges_and_filters/resident_species12_filter_res3.RDS')
+  resident_species.12 <- readRDS(file='data/spatial/02_ranges_and_filters/resident_species12_filter_res3.RDS')
   # Reset the parallel plan to sequential (optional cleanup step)
   # plan(sequential)
 }
@@ -250,8 +255,8 @@ gc()
   #   function(geometry) assign_h3_approx(geometry, 3),
   #   future.seed = TRUE  # Ensures reproducible parallel-safe random numbers
   # )
-  # saveRDS(passeriformes.filtered.merged.deduplicated.1, file='passeriformes.filtered.1_res3.RDS')
-  passeriformes.filtered.merged.deduplicated.1 <- readRDS(file='passeriformes.filtered.1_res3.RDS')
+  # saveRDS(passeriformes.filtered.merged.deduplicated.1, file='data/spatial/02_ranges_and_filters/passeriformes.filtered.1_res3.RDS')
+  passeriformes.filtered.merged.deduplicated.1 <- readRDS(file='data/spatial/02_ranges_and_filters/passeriformes.filtered.1_res3.RDS')
   # Reset the parallel plan to sequential (optional cleanup step)
   # plan(sequential)
   
@@ -263,8 +268,8 @@ gc()
   #   function(geometry) assign_h3_approx(geometry, 3),
   #   future.seed = TRUE  # Ensures reproducible parallel-safe random numbers
   # )
-  # saveRDS(passeriformes.filtered.merged.deduplicated.12, file='passeriformes.filtered.12_res3.RDS')
-  passeriformes.filtered.merged.deduplicated.12 <- readRDS(file='passeriformes.filtered.12_res3.RDS')
+  # saveRDS(passeriformes.filtered.merged.deduplicated.12, file='data/spatial/02_ranges_and_filters/passeriformes.filtered.12_res3.RDS')
+  passeriformes.filtered.merged.deduplicated.12 <- readRDS(file='data/spatial/02_ranges_and_filters/passeriformes.filtered.12_res3.RDS')
   # Reset the parallel plan to sequential (optional cleanup step)
   # plan(sequential)
   
@@ -424,7 +429,7 @@ resident_species.1.h3.centroid_dispersion <- aggregate_h3_dispersion_to_centroid
 )
 
 # load fitted object data
-min10.ic20.gic <- readRDS(file='new_bifrost/min10.ic20.gic.RDS')
+min10.ic20.gic <- readRDS(file='data/temporal/02_shift_search/new_bifrost/min10.ic20.gic.RDS')
 min10.ic20.gic$model_fit_history$fits<-NULL #wipe out the history to save memory
 
 resident_species.1.h3.divtimes <- aggregate_h3_divergence_times(
@@ -707,7 +712,6 @@ gc()
 
 #plotting test for vcv metrics
 {
-  
   
   plot_vcv_metrics_by_latitude_v2(
     results_vcv,
@@ -2198,23 +2202,23 @@ spatial_coords.12 <- data.frame(spatial_coords.12,
   
   # # # # Run the function
   # spatial_coords <- load_all_bioclim(
-  #   bioclim_dir = "/Users/cotinga/Downloads/wc2.1_5m_bio",
+  #   bioclim_dir = "data/spatial/05_bioclim_rasters/wc2.1_5m_bio",
   #   spatial_coords = spatial_coords,
   #   polygons_sf = polygons_sf.1,
   #   summary_function_name = 'mean'
   # )
-  # saveRDS(spatial_coords, file='spatial_coords.RDS')
-  spatial_coords<- readRDS('spatial_coords.RDS')
+  # saveRDS(spatial_coords, file='data/spatial/03_grid_climate_weights/spatial_coords.RDS')
+  spatial_coords<- readRDS('data/spatial/03_grid_climate_weights/spatial_coords.RDS')
   
   # # # # Run the function
   # spatial_coords.12 <- load_all_bioclim(
-  #   bioclim_dir = "/Users/cotinga/Downloads/wc2.1_5m_bio",
+  #   bioclim_dir = "data/spatial/05_bioclim_rasters/wc2.1_5m_bio",
   #   spatial_coords = spatial_coords.12,
   #   polygons_sf = polygons_sf.12,
   #   summary_function_name = 'mean'
   # )
-  # saveRDS(spatial_coords.12, file='spatial_coords.12.RDS')
-  spatial_coords.12<- readRDS('spatial_coords.12.RDS')
+  # saveRDS(spatial_coords.12, file='data/spatial/03_grid_climate_weights/spatial_coords.12.RDS')
+  spatial_coords.12<- readRDS('data/spatial/03_grid_climate_weights/spatial_coords.12.RDS')
   
   length(spatial_coords$lat)
   length(spatial_coords.12$lat)
@@ -2734,8 +2738,8 @@ spatial_coords.12 <- data.frame(spatial_coords.12,
   # Compute traces of the weights matrix
   W <- as(weights_idw.1000.clim, "CsparseMatrix")
   #trMat <- trW(W, type = "mult")  # Compute trace-based approximation
-  #saveRDS(trMat, file='trMat.1000.idw.RDS')
-  trMat<-readRDS(trMat, file='trMat.1000.idw.RDS')
+  #saveRDS(trMat, file='data/spatial/03_grid_climate_weights/trMat.1000.idw.RDS')
+  trMat<-readRDS(file='data/spatial/03_grid_climate_weights/trMat.1000.idw.RDS')
   
   #independent models
   #latitude + samling fraction
@@ -2759,13 +2763,11 @@ spatial_coords.12 <- data.frame(spatial_coords.12,
   impacts_approx.summary.step9c.2c.noDR <- summary(impacts_approx.step9c.2c.noDR, zstats=T, short=F)
   summary(slm_model.step9c.2c, Nagelkerke=T)
   
- 
-  
-  
 }
 
 #generate and add palettes to data
-{latitude_data <- list(
+{
+latitude_data <- list(
   metrics_df = data.frame(
     h3_cell = climate_vars.cleaned$h3,  # H3 cell IDs
     lat = climate_vars.cleaned$lat,

@@ -1,0 +1,16 @@
+# Ignore everything by default.
+*
+
+# Keep this file tracked.
+!.gitignore
+
+# Keep only the main repository source files.
+!README.md
+!SpatialAnalyses.R
+!SpatialAnalyses-functions.R
+!TemporalAnalyses.R
+!TemporalAnalyses-functions.R
+
+# Keep documentation split from top-level README.
+!docs/
+!docs/reproducibility.md
