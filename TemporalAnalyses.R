@@ -778,36 +778,36 @@ global.model.mvBM<-mvgls(
     
     #BIC threshold of 2
     {
-      simresults_100tip_10D_BIC2 <- run_FP_shift_inference(
-        base_tree = supertree,
-        n_datasets     = 100,
-        n_traits       = 10,
-        tree_tip_count = 100,
-        num_cores      = 8,
-        search_options = list(
-          formula                     = "trait_data~1",
-          min_descendant_tips         = 10,
-          ic_uncertainty_threshold    = 10,
-          shift_acceptance_threshold  = 2,
-          uncertainty                 = FALSE,
-          uncertaintyweights          = FALSE,
-          uncertaintyweights_par      = FALSE,
-          postorder_traversal         = FALSE,
-          plot                        = FALSE,
-          IC                          = "BIC",
-          store_model_fit_history     = FALSE,
-          num_cores                   = 1,
-          method = 'LL'
-        ),
-        simulation_options = list(
-          variance_mean    = 0.00025,
-          variance_sd      = 0.0001372484,
-          covariance_mean  = 2.248166e-05,
-          covariance_sd    = 0.000121608
-        ),
-        seed = 5
-      )
-      saveRDS(simresults_100tip_10D_BIC2, file="data/temporal/03_simulations/simresults_100tip_10D_BIC2.RDS")
+#       simresults_100tip_10D_BIC2 <- run_FP_shift_inference(
+#         base_tree = supertree,
+#         n_datasets     = 100,
+#         n_traits       = 10,
+#         tree_tip_count = 100,
+#         num_cores      = 8,
+#         search_options = list(
+#           formula                     = "trait_data~1",
+#           min_descendant_tips         = 10,
+#           ic_uncertainty_threshold    = 10,
+#           shift_acceptance_threshold  = 2,
+#           uncertainty                 = FALSE,
+#           uncertaintyweights          = FALSE,
+#           uncertaintyweights_par      = FALSE,
+#           postorder_traversal         = FALSE,
+#           plot                        = FALSE,
+#           IC                          = "BIC",
+#           store_model_fit_history     = FALSE,
+#           num_cores                   = 1,
+#           method = 'LL'
+#         ),
+#         simulation_options = list(
+#           variance_mean    = 0.00025,
+#           variance_sd      = 0.0001372484,
+#           covariance_mean  = 2.248166e-05,
+#           covariance_sd    = 0.000121608
+#         ),
+#         seed = 5
+#       )
+      # saveRDS(simresults_100tip_10D_BIC2, file="data/temporal/03_simulations/simresults_100tip_10D_BIC2.RDS")
       simresults_100tip_10D_BIC2 <- readRDS("data/temporal/03_simulations/simresults_100tip_10D_BIC2.RDS")
       
       #what is the FP rate?
@@ -828,36 +828,36 @@ global.model.mvBM<-mvgls(
     
     #BIC threshold of 10
     {
-      simresults_100tip_10D_BIC10 <- run_FP_shift_inference(
-        base_tree = supertree,
-        n_datasets = 100,
-        n_traits = 10,
-        tree_tip_count = 100,
-        num_cores = 8,
-        search_options = list(
-          formula = "trait_data~1",
-          min_descendant_tips = 10,
-          ic_uncertainty_threshold = 10,
-          shift_acceptance_threshold = 10,
-          uncertainty = FALSE,
-          uncertaintyweights = FALSE,
-          uncertaintyweights_par = FALSE,
-          postorder_traversal = FALSE,
-          plot = FALSE,
-          IC = "BIC",
-          store_model_fit_history = FALSE,
-          num_cores = 1, 
-          method = 'LL'
-        ),
-        simulation_options = list(
-          variance_mean = 0.00025,
-          variance_sd   = 0.0001372,
-          covariance_mean = 0.0000225,
-          covariance_sd   = 0.0001216
-        ),
-        seed = 5
-      )
-      saveRDS(simresults_100tip_10D_BIC10, file="data/temporal/03_simulations/simresults_100tip_10D_BIC10.RDS")
+#       simresults_100tip_10D_BIC10 <- run_FP_shift_inference(
+#         base_tree = supertree,
+#         n_datasets = 100,
+#         n_traits = 10,
+#         tree_tip_count = 100,
+#         num_cores = 8,
+#         search_options = list(
+#           formula = "trait_data~1",
+#           min_descendant_tips = 10,
+#           ic_uncertainty_threshold = 10,
+#           shift_acceptance_threshold = 10,
+#           uncertainty = FALSE,
+#           uncertaintyweights = FALSE,
+#           uncertaintyweights_par = FALSE,
+#           postorder_traversal = FALSE,
+#           plot = FALSE,
+#           IC = "BIC",
+#           store_model_fit_history = FALSE,
+#           num_cores = 1, 
+#           method = 'LL'
+#         ),
+#         simulation_options = list(
+#           variance_mean = 0.00025,
+#           variance_sd   = 0.0001372,
+#           covariance_mean = 0.0000225,
+#           covariance_sd   = 0.0001216
+#         ),
+#         seed = 5
+#       )
+      # saveRDS(simresults_100tip_10D_BIC10, file="data/temporal/03_simulations/simresults_100tip_10D_BIC10.RDS")
       simresults_100tip_10D_BIC10<- readRDS(file='data/temporal/03_simulations/simresults_100tip_10D_BIC10.RDS')
       
       #what is the FP rate?
@@ -881,36 +881,36 @@ global.model.mvBM<-mvgls(
   
   #simulation pipeline, 200 tips
   {
-    simresults_200tip_10D_BIC2 <- run_FP_shift_inference(
-      base_tree = supertree,
-      n_datasets        = 100,
-      n_traits          = 10,
-      tree_tip_count    = 200,
-      num_cores         = 8,
-      search_options    = list(
-        formula = "trait_data~1",
-        min_descendant_tips = 10,
-        ic_uncertainty_threshold = 10,
-        shift_acceptance_threshold = 2,
-        uncertainty = FALSE,
-        uncertaintyweights = FALSE,
-        uncertaintyweights_par = FALSE,
-        postorder_traversal = FALSE,
-        plot = FALSE,
-        IC = "BIC",
-        store_model_fit_history = FALSE,
-        num_cores = 1,
-        method = 'LL'
-      ),
-      simulation_options = list(
-        variance_mean   = 0.00025,
-        variance_sd     = 0.00014,
-        covariance_mean = 2.25e-05,
-        covariance_sd   = 0.00012
-      ),
-      seed = 5
-    )
-    saveRDS(simresults_200tip_10D_BIC2, file="data/temporal/03_simulations/simresults_200tip_10D_BIC2.RDS")
+#     simresults_200tip_10D_BIC2 <- run_FP_shift_inference(
+#       base_tree = supertree,
+#       n_datasets        = 100,
+#       n_traits          = 10,
+#       tree_tip_count    = 200,
+#       num_cores         = 8,
+#       search_options    = list(
+#         formula = "trait_data~1",
+#         min_descendant_tips = 10,
+#         ic_uncertainty_threshold = 10,
+#         shift_acceptance_threshold = 2,
+#         uncertainty = FALSE,
+#         uncertaintyweights = FALSE,
+#         uncertaintyweights_par = FALSE,
+#         postorder_traversal = FALSE,
+#         plot = FALSE,
+#         IC = "BIC",
+#         store_model_fit_history = FALSE,
+#         num_cores = 1,
+#         method = 'LL'
+#       ),
+#       simulation_options = list(
+#         variance_mean   = 0.00025,
+#         variance_sd     = 0.00014,
+#         covariance_mean = 2.25e-05,
+#         covariance_sd   = 0.00012
+#       ),
+#       seed = 5
+#     )
+    # saveRDS(simresults_200tip_10D_BIC2, file="data/temporal/03_simulations/simresults_200tip_10D_BIC2.RDS")
     simresults_200tip_10D_BIC2 <- readRDS("data/temporal/03_simulations/simresults_200tip_10D_BIC2.RDS")
     
     #what is the FP rate?
@@ -928,36 +928,36 @@ global.model.mvBM<-mvgls(
     FP.3.bic
     
     
-    simresults_200tip_10D_BIC10 <- run_FP_shift_inference(
-      base_tree = supertree,
-      n_datasets        = 100,
-      n_traits          = 10,
-      tree_tip_count    = 200,
-      num_cores         = 8,
-      search_options    = list(
-        formula = "trait_data~1",
-        min_descendant_tips = 10,
-        ic_uncertainty_threshold = 10,
-        shift_acceptance_threshold = 10,
-        uncertainty = FALSE,
-        uncertaintyweights = FALSE,
-        uncertaintyweights_par = FALSE,
-        postorder_traversal = FALSE,
-        plot = FALSE,
-        IC = "BIC",
-        store_model_fit_history = FALSE,
-        num_cores = 1,
-        method = 'LL'
-      ),
-      simulation_options = list(
-        variance_mean   = 0.00025,
-        variance_sd     = 0.00014,
-        covariance_mean = 2.25e-05,
-        covariance_sd   = 0.00012
-      ),
-      seed = 5
-    )
-    saveRDS(simresults_200tip_10D_BIC10, file='data/temporal/03_simulations/simresults_200tip_10D_BIC10.RDS')
+#     simresults_200tip_10D_BIC10 <- run_FP_shift_inference(
+#       base_tree = supertree,
+#       n_datasets        = 100,
+#       n_traits          = 10,
+#       tree_tip_count    = 200,
+#       num_cores         = 8,
+#       search_options    = list(
+#         formula = "trait_data~1",
+#         min_descendant_tips = 10,
+#         ic_uncertainty_threshold = 10,
+#         shift_acceptance_threshold = 10,
+#         uncertainty = FALSE,
+#         uncertaintyweights = FALSE,
+#         uncertaintyweights_par = FALSE,
+#         postorder_traversal = FALSE,
+#         plot = FALSE,
+#         IC = "BIC",
+#         store_model_fit_history = FALSE,
+#         num_cores = 1,
+#         method = 'LL'
+#       ),
+#       simulation_options = list(
+#         variance_mean   = 0.00025,
+#         variance_sd     = 0.00014,
+#         covariance_mean = 2.25e-05,
+#         covariance_sd   = 0.00012
+#       ),
+#       seed = 5
+#     )
+    # saveRDS(simresults_200tip_10D_BIC10, file='data/temporal/03_simulations/simresults_200tip_10D_BIC10.RDS')
     simresults_200tip_10D_BIC10<-readRDS(file='data/temporal/03_simulations/simresults_200tip_10D_BIC10.RDS')
     
     #what is the FP rate?
@@ -979,36 +979,36 @@ global.model.mvBM<-mvgls(
   #simulation pipeline, 300 tips
   {
     
-    simresults_300tip_10D_BIC2 <- run_FP_shift_inference(
-      base_tree = supertree,
-      n_datasets        = 100,
-      n_traits          = 10,
-      tree_tip_count    = 300,
-      num_cores         = 8,
-      search_options    = list(
-        formula = "trait_data~1",
-        min_descendant_tips = 10,
-        ic_uncertainty_threshold = 10,
-        shift_acceptance_threshold = 2,
-        uncertainty = FALSE,
-        uncertaintyweights = FALSE,
-        uncertaintyweights_par = FALSE,
-        postorder_traversal = FALSE,
-        plot = FALSE,
-        IC = "BIC",
-        store_model_fit_history = FALSE,
-        num_cores = 1,
-        method = 'LL'
-      ),
-      simulation_options = list(
-        variance_mean   = 0.00025,
-        variance_sd     = 0.00014,
-        covariance_mean = 2.25e-05,
-        covariance_sd   = 0.00012
-      ),
-      seed = 5
-    )
-    saveRDS(simresults_300tip_10D_BIC2, file="data/temporal/03_simulations/simresults_300tip_10D_BIC2.RDS")
+#     simresults_300tip_10D_BIC2 <- run_FP_shift_inference(
+#       base_tree = supertree,
+#       n_datasets        = 100,
+#       n_traits          = 10,
+#       tree_tip_count    = 300,
+#       num_cores         = 8,
+#       search_options    = list(
+#         formula = "trait_data~1",
+#         min_descendant_tips = 10,
+#         ic_uncertainty_threshold = 10,
+#         shift_acceptance_threshold = 2,
+#         uncertainty = FALSE,
+#         uncertaintyweights = FALSE,
+#         uncertaintyweights_par = FALSE,
+#         postorder_traversal = FALSE,
+#         plot = FALSE,
+#         IC = "BIC",
+#         store_model_fit_history = FALSE,
+#         num_cores = 1,
+#         method = 'LL'
+#       ),
+#       simulation_options = list(
+#         variance_mean   = 0.00025,
+#         variance_sd     = 0.00014,
+#         covariance_mean = 2.25e-05,
+#         covariance_sd   = 0.00012
+#       ),
+#       seed = 5
+#     )
+    # saveRDS(simresults_300tip_10D_BIC2, file="data/temporal/03_simulations/simresults_300tip_10D_BIC2.RDS")
     simresults_300tip_10D_BIC2<-readRDS(file='data/temporal/03_simulations/simresults_300tip_10D_BIC2.RDS')
     
     #what is the FP rate?
@@ -1026,36 +1026,36 @@ global.model.mvBM<-mvgls(
     FP.5.bic
     
     
-    simresults_300tip_10D_BIC10 <- run_FP_shift_inference(
-      base_tree = supertree,
-      n_datasets        = 100,
-      n_traits          = 10,
-      tree_tip_count    = 300,
-      num_cores         = 8,
-      search_options    = list(
-        formula = "trait_data~1",
-        min_descendant_tips = 10,
-        ic_uncertainty_threshold = 10,
-        shift_acceptance_threshold = 10,
-        uncertainty = FALSE,
-        uncertaintyweights = FALSE,
-        uncertaintyweights_par = FALSE,
-        postorder_traversal = FALSE,
-        plot = FALSE,
-        IC = "BIC",
-        store_model_fit_history = FALSE,
-        num_cores = 1,
-        method = 'LL'
-      ),
-      simulation_options = list(
-        variance_mean   = 0.00025,
-        variance_sd     = 0.00014,
-        covariance_mean = 2.25e-05,
-        covariance_sd   = 0.00012
-      ),
-      seed = 5
-    )
-    saveRDS(simresults_300tip_10D_BIC10, file="data/temporal/03_simulations/simresults_300tip_10D_BIC10.RDS")
+#     simresults_300tip_10D_BIC10 <- run_FP_shift_inference(
+#       base_tree = supertree,
+#       n_datasets        = 100,
+#       n_traits          = 10,
+#       tree_tip_count    = 300,
+#       num_cores         = 8,
+#       search_options    = list(
+#         formula = "trait_data~1",
+#         min_descendant_tips = 10,
+#         ic_uncertainty_threshold = 10,
+#         shift_acceptance_threshold = 10,
+#         uncertainty = FALSE,
+#         uncertaintyweights = FALSE,
+#         uncertaintyweights_par = FALSE,
+#         postorder_traversal = FALSE,
+#         plot = FALSE,
+#         IC = "BIC",
+#         store_model_fit_history = FALSE,
+#         num_cores = 1,
+#         method = 'LL'
+#       ),
+#       simulation_options = list(
+#         variance_mean   = 0.00025,
+#         variance_sd     = 0.00014,
+#         covariance_mean = 2.25e-05,
+#         covariance_sd   = 0.00012
+#       ),
+#       seed = 5
+#     )
+    # saveRDS(simresults_300tip_10D_BIC10, file="data/temporal/03_simulations/simresults_300tip_10D_BIC10.RDS")
     simresults_300tip_10D_BIC10 <- readRDS(file='data/temporal/03_simulations/simresults_300tip_10D_BIC10.RDS')
     
     #what is the FP rate?
@@ -2458,21 +2458,21 @@ waiting.times.lineage<-analyze_shift_waiting_times_by_branch(min10.ic20.gic, ver
 source('https://raw.githubusercontent.com/jonchang/fastdivrate/ee8fcd0b7e623253d4d1225dadd10ffec966b8dc/R/dr.R')
 tipDR <- DR_statistic(min10.ic20.gic$tree_no_uncertainty_untransformed)
 
-sampled_cv_shift_metrics<-cbind(sampled_cv, Shift_Counts = Total_Shift_Counts, log_lineage_rate_branches = log_lineage_rate.branches, log_lineage_rate_shifts = log_lineage_rate.shifts, log_tip_rate = log_tip_rate.shifts, tipDR = tipDR) 
+# sampled_cv_shift_metrics<-cbind(sampled_cv, Shift_Counts = Total_Shift_Counts, log_lineage_rate_branches = log_lineage_rate.branches, log_lineage_rate_shifts = log_lineage_rate.shifts, log_tip_rate = log_tip_rate.shifts, tipDR = tipDR) 
 
 #model residuals (for spatial analysis of disparity)
 #shift.residuals<-residuals(min10.ic20.gic$model_no_uncertainty, type = 'response')[sampled_cv$phylo,]
-shift.residuals<-residuals(global.model.mvBM, type = 'response')[sampled_cv$phylo,]
-sampled_cv_shift_metrics<-cbind(sampled_cv_shift_metrics, residuals = shift.residuals) #this is ok bc names match
+# shift.residuals<-residuals(global.model.mvBM, type = 'response')[sampled_cv$phylo,]
+# sampled_cv_shift_metrics<-cbind(sampled_cv_shift_metrics, residuals = shift.residuals) #this is ok bc names match
 
 #try reordering to match plot order
-sampled_cv_shift_metrics<-sampled_cv_shift_metrics[
-  jntools::get_tips_in_ape_plot_order(ladderize(untangle(
-    min10.ic20.gic$tree_no_uncertainty_untransformed
-  ))),]
+# sampled_cv_shift_metrics<-sampled_cv_shift_metrics[
+#   jntools::get_tips_in_ape_plot_order(ladderize(untangle(
+#     min10.ic20.gic$tree_no_uncertainty_untransformed
+#   ))),]
 
 #save the object to use for spatial analysis script
-saveRDS(sampled_cv_shift_metrics, file='data/spatial/04_temporal_bridge_inputs/sampled_cv_shift_metrics_8_08_25.RDS')
+# saveRDS(sampled_cv_shift_metrics, file='data/spatial/04_temporal_bridge_inputs/sampled_cv_shift_metrics_8_08_25.RDS')
 sampled_cv_shift_metrics<-readRDS('data/spatial/04_temporal_bridge_inputs/sampled_cv_shift_metrics_8_08_25.RDS')
   
 #cor(log(shift_rate_metrics.branches$Tip_Phenotype_Rate), 
