@@ -50,6 +50,15 @@ This repository provides the code to replicate the primary analysis pipeline in 
 - The scripts contain macOS/Unix-specific calls (`quartz()`, `pbmclapply`/`mclapply`), so Linux/macOS is the supported runtime target for full execution.
 - `TemporalAnalyses.R` sources a pinned remote helper (`fastdivrate` `dr.R`) at runtime.
 
+### Cached-Only Execution (Current Default)
+
+This repository is configured for cached-mode execution. Heavy recomputation blocks are intentionally disabled, and scripts load precomputed objects from `data/`.
+
+- `TemporalAnalyses.R` expects cached search/simulation/false-negative outputs under `data/temporal/`.
+- `SpatialAnalyses.R` expects cached matching/range/grid outputs under `data/spatial/`.
+- `saveRDS(...)` lines tied to heavy cached outputs are commented out.
+- If recomputing from raw inputs, re-enable the relevant compute/save blocks and regenerate caches into the same `data/` paths.
+
 ### System requirements
 
 -   **R ≥ 4.2**
