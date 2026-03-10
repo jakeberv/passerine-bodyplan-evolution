@@ -1,6 +1,6 @@
 # Supplementary Code Repository
 
-## Rates of passerine body plan evolution in time and space
+## Rates of passerine body plan evolution in time and space, in press
 
 **Authors:** Jacob S. Berv¹² [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-5962-0621), Charlotte M. Probst¹ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0003-4394-6931), Santiago Claramunt³⁴ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-8926-5974), J. Ryan Shipley⁵ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0001-9864-2498), Matt Friedman²⁶⁷ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-0114-7384), Stephen A. Smith⁸ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0003-2035-9531), David F. Fouhey⁹¹⁰ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0001-5028-5161), Brian C. Weeks¹ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0003-2967-2970)
 
@@ -17,6 +17,13 @@
 ¹⁰ Department of Electrical and Computer Engineering, Tandon School of Engineering, New York University (New York, NY, USA)
 
 **Corresponding authors:** Jacob S. Berv; Brian C. Weeks
+
+> [!NOTE]
+> **Note on reuse and analysis**
+>
+> This repository primarily serves as an archival record of the analyses used in this study.  
+> Readers interested in running these methods on their own datasets should use the **bifrost** R package, which provides a supported and generalizable implementation of this analysis pipeline. A full methodological manuscript is in preparation (preprint link to be added):
+> [CRAN](https://cran.r-project.org/package=bifrost) · [GitHub](https://github.com/jakeberv/bifrost)
 
 ---
 
@@ -277,10 +284,3 @@ Complete session/version provenance and full references are preserved in:
 ## Contact
 
 **Maintainer:** Jacob S. Berv — [jberv@umich.edu](mailto:jberv@umich.edu) · [jacob.berv@gmail.com](mailto:jacob.berv@gmail.com)
-
-> [!NOTE]
-> **Note on reuse and analysis**
->
-> This repository primarily serves as an archival record of the analyses used in this study.  
-> Users interested in running these methods on their own datasets should use the **bifrost** R package, which provides a supported and generalizable implementation of the analysis pipeline and is detailed in other work:
-> [CRAN](https://cran.r-project.org/package=bifrost) · [GitHub](https://github.com/jakeberv/bifrost)
