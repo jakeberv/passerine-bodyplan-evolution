@@ -14,3 +14,4 @@
 # Keep documentation split from top-level README.
 !docs/
 !docs/reproducibility.md
+.Rproj.user
