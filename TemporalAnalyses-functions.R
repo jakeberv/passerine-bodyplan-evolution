@@ -7449,6 +7449,85 @@ plot_multiple_ic_acceptance_curves <- function(model_list, plot_title = "IC Decl
   }
   
   
+  #' Summarize waiting times between successive acceleration events
+  #'
+  #' Computes lineage-weighted and collapsed summaries of increase-to-increase
+  #' waiting times in a phylogenetic tree. The lineage-weighted summary retains
+  #' repeated ancestral intervals across descendant tip paths, whereas the
+  #' collapsed summary counts each ancestral interval only once.
+  getAccelerationWaitSummary <- function(model_object) {
+    transitions <- suppressWarnings(suppressMessages({
+      capture.output(tmp <- extractMaxAgeOfRegimesWithRateChanges(model_object), file = NULL)
+      tmp
+    }))
+    colnames(transitions)[colnames(transitions) == "max_age_node"] <- "node"
+    colnames(transitions)[colnames(transitions) == "rate_change"] <- "type"
+    
+    tree <- model_object$tree_no_uncertainty_untransformed
+    nh <- phytools::nodeHeights(tree)
+    node_height <- numeric(ape::Ntip(tree) + tree$Nnode)
+    for (i in seq_len(nrow(nh))) {
+      node_height[tree$edge[i, 2]] <- nh[i, 2]
+    }
+    
+    shifts <- merge(
+      transitions,
+      data.frame(node = seq_along(node_height), height = node_height),
+      by = "node"
+    )
+    shifts <- subset(shifts, type != "root" & !is.na(height))
+    
+    root_node <- setdiff(unique(tree$edge[, 1]), unique(tree$edge[, 2]))
+    paths <- lapply(
+      seq_len(ape::Ntip(tree)),
+      function(tip) ape::nodepath(tree, from = root_node, to = tip)
+    )
+    
+    pair_list <- Filter(Negate(is.null), lapply(paths, function(path) {
+      path_shifts <- shifts[shifts$node %in% path, ]
+      path_shifts <- path_shifts[order(path_shifts$height), ]
+      inc <- subset(path_shifts, type == "increase", c(node, height))
+      if (nrow(inc) < 2) return(NULL)
+      
+      data.frame(
+        older_node = inc$node[-nrow(inc)],
+        younger_node = inc$node[-1],
+        gap = diff(inc$height)
+      )
+    }))
+    
+    if (length(pair_list) == 0) {
+      pairs <- data.frame(
+        older_node = integer(),
+        younger_node = integer(),
+        gap = numeric()
+      )
+    } else {
+      pairs <- do.call(rbind, pair_list)
+    }
+    
+    collapsed <- unique(pairs)
+    
+    summarize_gaps <- function(x) {
+      if (length(x) == 0) {
+        return(c(n = 0, mean = NA_real_, median = NA_real_, sd = NA_real_))
+      }
+      
+      c(
+        n = length(x),
+        mean = mean(x),
+        median = median(x),
+        sd = if (length(x) > 1) sd(x) else NA_real_
+      )
+    }
+    
+    rbind(
+      lineage = summarize_gaps(pairs$gap),
+      collapsed = summarize_gaps(collapsed$gap)
+    )
+  }
+  
+  
 }
 
 #' Create Paired Raincloud Plot with Wilcoxon Test Annotation
