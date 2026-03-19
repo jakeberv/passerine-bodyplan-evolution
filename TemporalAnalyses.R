@@ -20,6 +20,7 @@ library(scales)
 library(tidyverse)
 library(patchwork)
 library(readxl)
+library(rgbif)
 library(univariateML)
 library(evd)
 library(fitdistrplus)
@@ -2453,6 +2454,8 @@ waiting.times.global<-summarize_waiting_times(ladderize(untangle(min10.ic20.gic$
 waiting.times<-summarize_tree_shift_metrics(min10.ic20.gic, verbose = T)
 waiting.times.temporal<-analyze_shift_waiting_times(min10.ic20.gic, verbose = T)
 waiting.times.lineage<-analyze_shift_waiting_times_by_branch(min10.ic20.gic, verbose = T)
+acceleration.wait.summary <- getAccelerationWaitSummary(min10.ic20.gic)
+
 
 #add tipDR (as a control) using jon chang's code
 source('https://raw.githubusercontent.com/jonchang/fastdivrate/ee8fcd0b7e623253d4d1225dadd10ffec966b8dc/R/dr.R')
@@ -2723,7 +2726,6 @@ sampled_cv_shift_metrics<-readRDS('data/spatial/04_temporal_bridge_inputs/sample
     keynodes <- extractMaxAgeOfRegimesWithRateChanges(min10.ic20.gic, filter_by = 'increase')$max_age_node[-1]
     perc_changes <- extractMaxAgeOfRegimesWithRateChanges(min10.ic20.gic, filter_by = 'increase')$percentage_change[-1]
     #modal accelaration is 120-166%
-    
     clade_info <- extract_clade_info(min10.ic20.gic, keynodes, cores = 4)
     
     extractMaxAgeOfRegimesWithRateChanges(min10.ic20.gic, filter_by = 'increase')
@@ -3133,11 +3135,6 @@ sampled_cv_shift_metrics<-readRDS('data/spatial/04_temporal_bridge_inputs/sample
       
     }
     
-    --
-      replicated early bursts link cliamate and body plan evolution---
-      --
-      
-      
       
   }
   
