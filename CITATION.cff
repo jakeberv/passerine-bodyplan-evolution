@@ -2,6 +2,8 @@ cff-version: 1.2.0
 message: "If you use this repository, please cite it using the metadata below."
 title: "Supplementary code for: Rates of passerine body plan evolution in time and space"
 type: software
+version: 1.0.0
+date-released: 2026-03-24
 license: GPL-2.0-or-later
 authors:
   - family-names: "Berv"
