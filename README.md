@@ -33,7 +33,7 @@
 - `SpatialAnalyses.R` + `SpatialAnalyses-functions.R` → species matching, range/grid processing, climate joins, spatial models, and figures (Figures 1B–D, 3–4).
 - Heavy steps are cached as `.RDS` files (archived on Zenodo); scripts read those by default.
 
-This repository provides the code to replicate the primary analysis pipeline in our study, which integrates phylogenetic comparative methods with spatial statistics. The workflow is divided into two primary R scripts and two function libraries. Each primary script loads dependencies, checks for the `data/` directory, and executes the analysis pipeline; some optional blocks reuse helper definitions across the two function files.
+This repository provides the code to replicate the primary analysis pipeline in our study, which integrates phylogenetic comparative methods with spatial statistics. The workflow is divided into two large R scripts and two function libraries. Each primary script loads dependencies, checks for the `data/` directory, and executes the analysis pipeline; some optional blocks reuse helper definitions across the two function files.
 
 ---
 
@@ -41,7 +41,7 @@ This repository provides the code to replicate the primary analysis pipeline in 
 
 - [Quickstart](#quickstart)
 - [Analytical Workflow](#analytical-workflow)
-- [Data and Phylogeny](#data-and-phylogeny)
+- [Study Data Sources](#study-data-sources)
 - [Citation](#citation)
 - [Reproducibility Details](#reproducibility-details)
 - [License](#license)
@@ -154,7 +154,7 @@ message("Done. If there were no errors above, all requested packages are install
 
 Run scripts from the repository root. Cached inputs are used for most heavy steps, and scripts expect a populated `data/` directory.
 
-Download the published supplementary cached inputs archive from Zenodo, unpack it, and place the resulting `data/` folder at the repository root. The archive includes its own `data/README.md`, which serves as the canonical data manifest for the cached inputs. The minimum required structure is:
+Download the published supplementary cached inputs archive from Zenodo, unpack it, and place the resulting `data/` folder at the repository root. The archive includes its own `data/README.md`, which serves as the canonical data manifest for the cached inputs. For default cached-mode reproduction, the minimum required structure is:
 
 ```         
 data/
@@ -178,8 +178,6 @@ data/
     05_climate_reference/
       aba6853_tables_s8_s34.xlsx
   spatial/
-    00_raw_range_source/
-      ranges_4-16-22_multipolygons
     01_taxonomy_matching/
       gbif_matches.RDS
       ranges_gbif_matches.RDS
@@ -194,12 +192,16 @@ data/
       sampled_cv_shift_metrics_8_08_25.RDS
 ```
 
+The companion data archive may also include note-only directories such as `spatial/00_raw_range_source/` and `spatial/05_bioclim_rasters/`, which document source inputs that are not redistributed in the public archive.
+
 ---
 
-**External datasets:**
-- **WorldClim 2.1** bioclim rasters (5 arc-min) are staged under `data/spatial/05_bioclim_rasters/wc2.1_5m_bio/` for reruns of climate extraction blocks.
+### External Inputs and Redistribution Notes
+
+- **BirdLife International** range polygons were used as the original source for the spatial workflow. The raw BirdLife source object is not redistributed in the public archive; see `data/spatial/00_raw_range_source/README.md` in the companion data archive for details on the excluded source file.
+- **WorldClim 2.1** bioclim rasters (5 arc-min) were used for optional climate-extraction reruns, but the original GeoTIFF stack is not redistributed in the public archive. The companion data archive instead provides downstream cached climate summaries used by the released workflow; see `data/spatial/05_bioclim_rasters/wc2.1_5m_bio/README.md` in the companion data archive for details.
 - **GBIF** backbone is mostly cached via `.RDS` files, but one live rematch call remains uncommented in `SpatialAnalyses.R` (`rgbif::name_backbone_checklist(...)`).
-- Country boundaries via `{rnaturalearth}` are retrieved at runtime.
+- Country boundaries are retrieved at runtime via `{rnaturalearth}`.
 
 Published supplementary cached inputs archive on Zenodo:
 
@@ -244,7 +246,7 @@ We use **Spatial Autoregressive Models** (via `spatialreg::lagsarlm`) to investi
 
 ---
 
-### Data and Phylogeny
+### Study Data Sources
 
 The analyses in this study are based on three primary data sources:
 
@@ -282,7 +284,7 @@ Complete session/version provenance and full references are preserved in:
 ## License
 
 -   **Code:** GNU General Public License, version 2 or later. See `LICENSE`.
--   **Data:** Governed by providers’ licenses (e.g., WorldClim, GBIF). Verify terms before redistribution.
+-   **External Data:** Governed by providers’ licenses (e.g., BirdLife International, WorldClim, GBIF). Verify terms before redistribution.
 
 ---
 
