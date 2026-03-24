@@ -22,7 +22,7 @@
 > **Note on reuse and analysis**
 >
 > This repository primarily serves as an archival record of the analyses used in this study.  
-> Readers interested in running these methods on their own datasets should use the **bifrost** R package, which provides a supported and generalizable implementation of this analysis pipeline. A full methodological manuscript is in preparation (preprint link to be added):
+> Readers interested in running these methods on their own datasets should use the **bifrost** R package, which provides a supported and generalizable implementation of this analysis pipeline:
 > [CRAN](https://cran.r-project.org/package=bifrost) · [GitHub](https://github.com/jakeberv/bifrost)
 
 ---
@@ -84,7 +84,9 @@ sudo apt-get update
 sudo apt-get install -y gdal-bin libgdal-dev libgeos-dev libproj-dev libudunits2-dev libv8-dev
 ```
 
-Windows: - Install **Rtools** (matching your R version). `sf`, `terra`, `lwgeom`, and `V8` can install from CRAN binaries, but this repository's scripts use macOS/Unix-specific calls (`quartz()`, `pbmclapply`/`mclapply`) in active/optional blocks, so Linux/macOS is the supported runtime target for full execution.
+Windows:
+
+- Install **Rtools** (matching your R version). `sf`, `terra`, `lwgeom`, and `V8` can install from CRAN binaries, but this repository's scripts use macOS/Unix-specific calls (`quartz()`, `pbmclapply`/`mclapply`) in active/optional blocks, so Linux/macOS is the supported runtime target for full execution.
 
 > If `cairo_pdf()` fails on Linux, install Cairo headers: `sudo apt-get install libcairo2-dev`.
 
@@ -115,7 +117,7 @@ cran_pkgs <- c(
   "tidyterra","spdep","terra","spatialreg",
   "MASS","dplyr","stringr","stargazer",
   "TeachingDemos","phangorn","ggrain","ggsignif","circlize","gridExtra",
-  "corpcor","fastmatch","e1071","dispRity","caper","gplots",
+  "corpcor","fastmatch","e1071","dispRity","caper","gplots","RRphylo",
   "matrixStats","geiger"
 )
 
@@ -126,11 +128,6 @@ if (length(need)) install.packages(need)
 if (!requireNamespace("h3", quietly = TRUE)) {
   if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")
   devtools::install_github("crazycapivara/h3-r")
-}
-
-if (!requireNamespace("jntools", quietly = TRUE)) {
-  if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")
-  devtools::install_github("joelnitta/jntools")
 }
 
 # Bioconductor package used by active figure code paths
@@ -157,7 +154,7 @@ message("Done. If there were no errors above, all requested packages are install
 
 Run scripts from the repository root. Cached inputs are used for most heavy steps, and scripts expect a populated `data/` directory.
 
-Use `data/README.md` as the canonical data manifest. The minimum required structure is:
+Download the published supplementary cached inputs archive from Zenodo, unpack it, and place the resulting `data/` folder at the repository root. The archive includes its own `data/README.md`, which serves as the canonical data manifest for the cached inputs. The minimum required structure is:
 
 ```         
 data/
@@ -204,7 +201,9 @@ data/
 - **GBIF** backbone is mostly cached via `.RDS` files, but one live rematch call remains uncommented in `SpatialAnalyses.R` (`rgbif::name_backbone_checklist(...)`).
 - Country boundaries via `{rnaturalearth}` are retrieved at runtime.
 
-DOIs/links to archives (e.g., Zenodo) will be added when paper is published.
+Published supplementary cached inputs archive on Zenodo:
+
+- DOI: <https://doi.org/10.5281/zenodo.19198393>
 
 ### Troubleshooting
 
@@ -262,9 +261,15 @@ The analyses in this study are based on three primary data sources:
 
 ## Citation
 
-If you use the code or data from this repository, please cite our paper:
+If you use the code in this repository, please cite:
 
-> Berv, J.S., Probst, C.M., Claramunt, S., Shipley, J.R., Friedman, M., Smith, S.A., Fouhey, D.F., & Weeks, B.C. (Year). Rates of passerine body plan evolution in time and space. *Journal Placeholder*, Volume(Issue), pages. [DOI placeholder]
+> Berv, J. S., Probst, C. M., Claramunt, S., Shipley, J. R., Friedman, M., Smith, S. A., Fouhey, D. F., & Weeks, B. C. (2026). *Supplementary code for Rates of passerine body plan evolution in time and space* [Computer software]. GitHub. <https://github.com/jakeberv/passerine-bodyplan-evolution>
+
+If you use the cached supplementary data archive, please also cite:
+
+> Berv, J., Probst, C., Claramunt, S., Shipley, J. R., Friedman, M., Smith, S., Fouhey, D., & Weeks, B. (2026). *Supplementary data archive for Rates of passerine body plan evolution in time and space* (v1.0.0) [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.19198393>
+
+The manuscript citation will be added here once the in-press paper has final bibliographic details.
 
 ## Reproducibility Details
 
@@ -276,7 +281,7 @@ Complete session/version provenance and full references are preserved in:
 
 ## License
 
--   **Code:** (add a `LICENSE` file).
+-   **Code:** GNU General Public License, version 2 or later. See `LICENSE`.
 -   **Data:** Governed by providers’ licenses (e.g., WorldClim, GBIF). Verify terms before redistribution.
 
 ---
