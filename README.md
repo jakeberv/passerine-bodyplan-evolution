@@ -265,7 +265,7 @@ The analyses in this study are based on three primary data sources:
 
 If you use the code in this repository, please cite:
 
-> Berv, J. S., Probst, C. M., Claramunt, S., Shipley, J. R., Friedman, M., Smith, S. A., Fouhey, D. F., & Weeks, B. C. (2026). *Supplementary code for Rates of passerine body plan evolution in time and space* [Computer software]. GitHub. <https://github.com/jakeberv/passerine-bodyplan-evolution>
+> Berv, J. S., Probst, C. M., Claramunt, S., Shipley, J. R., Friedman, M., Smith, S. A., Fouhey, D. F., & Weeks, B. C. (2026). *Supplementary code for: Rates of passerine body plan evolution in time and space* (v1.0.0). Zenodo. <https://doi.org/10.5281/zenodo.19211076>
 
 If you use the cached supplementary data archive, please also cite:
 
