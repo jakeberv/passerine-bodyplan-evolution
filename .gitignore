@@ -5,6 +5,7 @@
 !.gitignore
 
 # Keep only the main repository source files.
+!LICENSE
 !README.md
 !SpatialAnalyses.R
 !SpatialAnalyses-functions.R
