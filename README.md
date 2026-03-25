@@ -207,6 +207,8 @@ The companion data archive may also include note-only directories such as `spati
 
 Published supplementary cached inputs archive on Zenodo:
 
+[![Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19198393.svg)](https://doi.org/10.5281/zenodo.19198393)
+
 - DOI: <https://doi.org/10.5281/zenodo.19198393>
 
 ### Troubleshooting
