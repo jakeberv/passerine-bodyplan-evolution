@@ -156,7 +156,7 @@ message("Done. If there were no errors above, all requested packages are install
 
 Run scripts from the repository root. Cached inputs are used for most heavy steps, and scripts expect a populated `data/` directory.
 
-Download the published supplementary cached inputs archive from Zenodo, unpack it, and place the resulting `data/` folder at the repository root. The archive includes its own `data/README.md`, which serves as the canonical data manifest for the cached inputs. For default cached-mode reproduction, the minimum required structure is:
+Download the published supplementary cached inputs archive from Zenodo (DOI: <https://doi.org/10.5281/zenodo.19198393>), unpack it, and place the resulting `data/` folder at the repository root. The archive includes its own `data/README.md`, which serves as the canonical data manifest for the cached inputs. For default cached-mode reproduction, the minimum required structure is:
 
 ```         
 data/
@@ -208,8 +208,6 @@ The companion data archive may also include note-only directories such as `spati
 Published supplementary cached inputs archive on Zenodo:
 
 [![Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19198393.svg)](https://doi.org/10.5281/zenodo.19198393)
-
-- DOI: <https://doi.org/10.5281/zenodo.19198393>
 
 ### Troubleshooting
 
