@@ -1,8 +1,8 @@
 # Supplementary Code Repository
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19211075.svg)](https://doi.org/10.5281/zenodo.19211075)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19211076.svg)](https://doi.org/10.5281/zenodo.19211076)
 
-## Rates of passerine body plan evolution in time and space (*in press*)
+## Rates of passerine body plan evolution in time and space
 
 **Authors:** Jacob S. Berv¹² [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-5962-0621), Charlotte M. Probst¹ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0003-4394-6931), Santiago Claramunt³⁴ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-8926-5974), J. Ryan Shipley⁵ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0001-9864-2498), Matt Friedman²⁶⁷ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-0114-7384), Stephen A. Smith⁸ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0003-2035-9531), David F. Fouhey⁹¹⁰ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0001-5028-5161), Brian C. Weeks¹ [![ORCID](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0003-2967-2970)
 
@@ -267,13 +267,13 @@ The analyses in this study are based on three primary data sources:
 
 If you use the code in this repository, please cite:
 
+> Berv, J. S., Probst, C. M., Claramunt, S., Shipley, J. R., Friedman, M., Smith, S. A., Fouhey, D. F., & Weeks, B. C. (2026). *Rates of passerine body plan evolution in time and space*. **Nature Ecology & Evolution**. <https://doi.org/10.1038/s41559-026-03110-5>
+
 > Berv, J. S., Probst, C. M., Claramunt, S., Shipley, J. R., Friedman, M., Smith, S. A., Fouhey, D. F., & Weeks, B. C. (2026). *Supplementary code for: Rates of passerine body plan evolution in time and space* (v1.0.0). Zenodo. <https://doi.org/10.5281/zenodo.19211076>
 
 If you use the cached supplementary data archive, please also cite:
 
 > Berv, J., Probst, C., Claramunt, S., Shipley, J. R., Friedman, M., Smith, S., Fouhey, D., & Weeks, B. (2026). *Supplementary data archive for Rates of passerine body plan evolution in time and space* (v1.0.0) [Data set]. Zenodo. <https://doi.org/10.5281/zenodo.19198393>
-
-The manuscript citation will be added here once the in-press paper has final bibliographic details.
 
 ## Reproducibility Details
 
